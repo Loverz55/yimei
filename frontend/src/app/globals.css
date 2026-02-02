@@ -14,6 +14,37 @@
   --gold-accent: #C9A962;
   --sage: #A8B5A0;
   --sage-light: #E8EDE5;
+
+  /* shadcn/ui CSS 变量 */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 17%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 17%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 17%;
+
+  --primary: 343 30% 56%;
+  --primary-foreground: 32 100% 98%;
+
+  --secondary: 30 20% 79%;
+  --secondary-foreground: 0 0% 17%;
+
+  --muted: 30 20% 79%;
+  --muted-foreground: 30 10% 50%;
+
+  --accent: 42 44% 58%;
+  --accent-foreground: 0 0% 17%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 32 100% 98%;
+
+  --border: 30 20% 79%;
+  --input: 30 20% 79%;
+  --ring: 343 30% 56%;
+
+  --radius: 0.5rem;
 }
 
 * { box-sizing: border-box; }
