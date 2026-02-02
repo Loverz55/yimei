@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(pnpm add:*)",
-      "Bash(npx shadcn@latest add:*)"
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(test:*)"
     ]
   }
 }
