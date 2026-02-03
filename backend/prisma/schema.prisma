@@ -14,8 +14,55 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  username String  @unique
-  nickname String?
-  role     Int     @default(0)
+  id                   Int                   @id @default(autoincrement())
+  loginId              String                @unique
+  password             String
+  nickname             String?
+  role                 Int                   @default(0)
+  createdAt            DateTime              @default(now())
+  updateArt            DateTime
+  poster               Poster[]
+  aestheticSimulations AestheticSimulation[]
+}
+
+model File {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique // S3存储路径
+  contentType String // 文件MIME类型
+  size        Int? // 文件大小（字节）
+  status      String   @default("pending") // pending | uploaded | deleted
+  userId      Int? // 上传用户ID（可选）
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  poster      Poster[]
+}
+
+model Poster {
+  id            Int      @id @default(autoincrement())
+  createdPeople Int
+  imgId         Int
+  imgUrl        String?  // 可访问的图片URL
+  user          User     @relation(fields: [createdPeople], references: [id])
+  createdAt     DateTime @default(now())
+  updateArt     DateTime
+  file          File     @relation(fields: [imgId], references: [id])
+}
+
+model AiModelConig {
+  id        Int      @id @default(autoincrement())
+  modleId   String
+  modleName String?
+  baseUrl   String
+  key       String
+  createdAt DateTime @default(now())
+  updateArt DateTime
+}
+
+model AestheticSimulation {
+  id            Int      @id @default(autoincrement())
+  config        Json?
+  createdPeople Int
+  user          User     @relation(fields: [createdPeople], references: [id])
+  createdAt     DateTime @default(now())
+  updateArt     DateTime
 }
