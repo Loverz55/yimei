@@ -6,10 +6,15 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ModelconfigService } from './modelconfig.service';
-import { CreateModelconfigDto, UpdateModelconfigDto } from './dto/modelconfig.dto';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  CreateModelconfigDto,
+  UpdateModelconfigDto,
+} from './dto/modelconfig.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 
 @Controller('modelconfig')
 @ApiTags('模型列表')
@@ -17,6 +22,8 @@ export class ModelconfigController {
   constructor(private readonly modelconfigService: ModelconfigService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   create(@Body() createModelconfigDto: CreateModelconfigDto) {
     return this.modelconfigService.create(createModelconfigDto);
   }
