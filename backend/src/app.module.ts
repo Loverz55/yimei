@@ -1,17 +1,40 @@
 import { Module } from '@nestjs/common';
+import { APP_PIPE, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { UploadModule } from './upload/upload.module';
+import { ModelconfigModule } from './modelconfig/modelconfig.module';
+import { ZodValidationPipe } from 'nestjs-zod';
+import { ZodSerializerInterceptor } from 'nestjs-zod';
+import { ModelReqModule } from './model-req/model-req.module';
+import { validate } from './config/env.validation';
+import { AppConfigModule } from './config/config.module';
 
 @Module({
   imports: [
-    AuthModule,
-    PrismaModule,
     ConfigModule.forRoot({
       isGlobal: true,
+      validate,
+      expandVariables: true,
     }),
+    AppConfigModule,
+    AuthModule,
+    PrismaModule,
+    UploadModule,
+    ModelconfigModule,
+    ModelReqModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useClass: ZodValidationPipe,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ZodSerializerInterceptor,
+    },
+  ],
 })
 export class AppModule {}
