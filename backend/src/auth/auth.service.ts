@@ -47,10 +47,12 @@ export class AuthService {
     const token = await this.generateToken(user);
 
     return success('注册成功', {
-      userId: user.id,
-      loginId: user.loginId,
-      nickname: user.nickname,
-      role: user.role,
+      user: {
+        userId: user.id,
+        loginId: user.loginId,
+        nickname: user.nickname,
+        role: user.role,
+      },
       token,
     });
   }
