@@ -1,26 +1,117 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
+import { PrismaService } from '../prisma/prisma.service';
+import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { success } from '../common/result';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async register(registerDto: RegisterDto) {
+    const { loginId, password, nickname } = registerDto;
+
+    // 检查用户是否已存在
+    const existingUser = await this.prisma.client.user.findUnique({
+      where: { loginId },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('该账号已被注册');
+    }
+
+    // 加密密码
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // 创建用户
+    const user = await this.prisma.client.user.create({
+      data: {
+        loginId,
+        password: hashedPassword,
+        nickname: nickname || loginId,
+        updateArt: new Date(),
+      },
+    });
+
+    // 生成 token
+    const token = await this.generateToken(user);
+
+    return success('注册成功', {
+      userId: user.id,
+      loginId: user.loginId,
+      nickname: user.nickname,
+      role: user.role,
+      token,
+    });
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async login(loginDto: LoginDto) {
+    const { loginId, password } = loginDto;
+
+    // 查找用户
+    const user = await this.prisma.client.user.findUnique({
+      where: { loginId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('账号或密码错误');
+    }
+
+    // 验证密码
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('账号或密码错误');
+    }
+
+    // 生成 token
+    const token = await this.generateToken(user);
+
+    return success('登录成功', {
+      userId: user.id,
+      loginId: user.loginId,
+      nickname: user.nickname,
+      role: user.role,
+      token,
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
+  private async generateToken(user: any) {
+    const payload = {
+      sub: user.id,
+      loginId: user.loginId,
+      role: user.role,
+    };
+
+    return this.jwtService.sign(payload);
   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+  async validateUser(userId: number) {
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        loginId: true,
+        nickname: true,
+        role: true,
+        createdAt: true,
+      },
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    if (!user) {
+      throw new UnauthorizedException('用户不存在');
+    }
+
+    return user;
   }
 }
