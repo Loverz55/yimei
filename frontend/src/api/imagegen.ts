@@ -30,7 +30,7 @@ export const inpaintImgApi = (data: InpaintImageRequest) => {
  */
 export const getHistoryImgApi = (limit = 20, offset = 0) => {
   return api.get<ImageGenerationHistory[]>(
-    `/image-gen/history?limit=${limit}&offset=${offset}`,
+    `/api/image-gen/history?limit=${limit}&offset=${offset}`,
   );
 };
 

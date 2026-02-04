@@ -3,7 +3,7 @@
  */
 
 // Provider类型
-export type ProviderType = 'stability' | 'openai' | 'aliyun';
+export type ProviderType = 'stability' | 'openai' | 'aliyun' | 'gemini';
 
 // 服务类型
 export type ServiceType = 'image-gen' | 'text-gen' | 'embedding';
