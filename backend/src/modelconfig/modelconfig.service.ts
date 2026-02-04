@@ -52,11 +52,7 @@ export class ModelconfigService {
 
       this.logger.log(`创建了新的Provider配置：${config.name} (ID: ${config.id})`);
 
-      return {
-        code: 0,
-        msg: '配置创建成功',
-        data: config,
-      };
+      return config;
     } catch (error) {
       this.logger.error('创建配置失败', error as any);
       throw new BadRequestException('配置创建失败：' + (error as any)?.message);
@@ -85,15 +81,11 @@ export class ModelconfigService {
     ]);
 
     return {
-      code: 0,
-      msg: '查询成功',
-      data: {
-        list: configs,
-        total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
-      },
+      list: configs,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
@@ -109,11 +101,7 @@ export class ModelconfigService {
       throw new NotFoundException(`未找到ID为 ${id} 的配置`);
     }
 
-    return {
-      code: 0,
-      msg: '查询成功',
-      data: config,
-    };
+    return config;
   }
 
   /**
@@ -136,11 +124,7 @@ export class ModelconfigService {
 
       this.logger.log(`更新了Provider配置：${updated.name} (ID: ${id})`);
 
-      return {
-        code: 0,
-        msg: '配置更新成功',
-        data: updated,
-      };
+      return updated;
     } catch (error) {
       this.logger.error(`更新配置失败 (ID: ${id})`, error as any);
       throw new BadRequestException('配置更新失败：' + (error as any)?.message);
@@ -164,11 +148,6 @@ export class ModelconfigService {
     });
 
     this.logger.log(`删除了Provider配置：${existing.name} (ID: ${id})`);
-
-    return {
-      code: 0,
-      msg: '配置删除成功',
-    };
   }
 
   /**
@@ -196,26 +175,16 @@ export class ModelconfigService {
       );
 
       return {
-        code: 0,
-        msg: isValid ? 'API Key 验证成功' : 'API Key 验证失败',
-        data: {
-          configId: id,
-          valid: isValid,
-          provider: config.provider,
-          name: config.name,
-        },
+        configId: id,
+        valid: isValid,
+        provider: config.provider,
+        name: config.name,
       };
     } catch (error) {
       this.logger.error(`配置验证出错 (ID: ${id})`, error as any);
-      return {
-        code: 1,
-        msg: '配置验证失败：' + (error as any)?.message,
-        data: {
-          configId: id,
-          valid: false,
-          error: (error as any)?.message,
-        },
-      };
+      throw new BadRequestException(
+        '配置验证失败：' + (error as any)?.message,
+      );
     }
   }
 
@@ -267,17 +236,13 @@ export class ModelconfigService {
     ]);
 
     return {
-      code: 0,
-      msg: '成本统计查询成功',
-      data: {
-        configId: id,
-        configName: config.name,
-        provider: config.provider,
-        totalCost: stats._sum.cost || 0,
-        totalRequests: stats._count.id || 0,
-        avgCost: stats._avg.cost || 0,
-        recentGenerations,
-      },
+      configId: id,
+      configName: config.name,
+      provider: config.provider,
+      totalCost: stats._sum.cost || 0,
+      totalRequests: stats._count.id || 0,
+      avgCost: stats._avg.cost || 0,
+      recentGenerations,
     };
   }
 
@@ -307,12 +272,8 @@ export class ModelconfigService {
     this.logger.log(`设置了限流配置：${config.name} (ID: ${id})`);
 
     return {
-      code: 0,
-      msg: '限流配置设置成功',
-      data: {
-        configId: id,
-        rateLimit: rateLimitDto,
-      },
+      configId: id,
+      rateLimit: rateLimitDto,
     };
   }
 
@@ -331,12 +292,8 @@ export class ModelconfigService {
     const rateLimit = (config.config as any)?.rateLimit || null;
 
     return {
-      code: 0,
-      msg: '查询成功',
-      data: {
-        configId: id,
-        rateLimit,
-      },
+      configId: id,
+      rateLimit,
     };
   }
 
@@ -442,13 +399,9 @@ export class ModelconfigService {
     );
 
     return {
-      code: 0,
-      msg: '参数预设设置成功',
-      data: {
-        configId: id,
-        presetName: presetDto.presetName,
-        params: presetDto.params,
-      },
+      configId: id,
+      presetName: presetDto.presetName,
+      params: presetDto.params,
     };
   }
 
@@ -467,12 +420,8 @@ export class ModelconfigService {
     const presets = (config.config as any)?.presets || {};
 
     return {
-      code: 0,
-      msg: '查询成功',
-      data: {
-        configId: id,
-        presets,
-      },
+      configId: id,
+      presets,
     };
   }
 
@@ -502,11 +451,6 @@ export class ModelconfigService {
     });
 
     this.logger.log(`删除了参数预设「${presetName}」：${config.name} (ID: ${id})`);
-
-    return {
-      code: 0,
-      msg: '参数预设删除成功',
-    };
   }
 
   /**

@@ -239,7 +239,6 @@ export class ImageGenService implements OnModuleInit {
       configId: result.configId,
       model: result.model,
       createdAt: imageGeneration.createdAt,
-      message: '图片生成成功',
     };
   }
 
@@ -354,7 +353,6 @@ export class ImageGenService implements OnModuleInit {
       configId: result.configId,
       model: result.model,
       createdAt: imageGeneration.createdAt,
-      message: '图片局部重绘成功',
     };
   }
 
@@ -372,10 +370,7 @@ export class ImageGenService implements OnModuleInit {
       skip: offset,
     });
 
-    return {
-      list: generations,
-      message: '获取生成历史成功',
-    };
+    return generations;
   }
 
   /**
@@ -393,10 +388,7 @@ export class ImageGenService implements OnModuleInit {
       throw new NotFoundException('未找到对应的生成记录');
     }
 
-    return {
-      data: generation,
-      message: '获取生成记录成功',
-    };
+    return generation;
   }
 
   /**
@@ -433,7 +425,6 @@ export class ImageGenService implements OnModuleInit {
     return {
       success: true,
       count: this.providerInstances.size,
-      message: '图像生成服务配置已重新加载',
     };
   }
 }

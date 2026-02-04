@@ -11,6 +11,7 @@ import { LoginDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { UserInfo } from './decorators/current-user.decorator';
 import { User } from 'generated/prisma/client';
+import { success } from '../common/result';
 
 @ApiTags('认证')
 @Controller('auth')
@@ -22,7 +23,8 @@ export class AuthController {
   @ApiResponse({ status: 201, description: '注册成功' })
   @ApiResponse({ status: 409, description: '账号已存在' })
   async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+    const data = await this.authService.register(registerDto);
+    return success('注册成功', data);
   }
 
   @Post('login')
@@ -30,7 +32,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: '登录成功' })
   @ApiResponse({ status: 401, description: '账号或密码错误' })
   async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+    const data = await this.authService.login(loginDto);
+    return success('登录成功', data);
   }
 
   @Get('profile')
@@ -40,6 +43,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: '获取成功' })
   @ApiResponse({ status: 401, description: '未授权' })
   async getProfile(@UserInfo() user: TokenDto) {
-    return this.authService.validateUser(user.id);
+    const data = await this.authService.validateUser(user.id);
+    return success('获取成功', data);
   }
 }

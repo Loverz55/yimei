@@ -2,13 +2,11 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
-  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
-import { success } from '../common/result';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +44,7 @@ export class AuthService {
     // 生成 token
     const token = await this.generateToken(user);
 
-    return success('注册成功', {
+    return {
       user: {
         id: user.id,
         loginId: user.loginId,
@@ -54,7 +52,7 @@ export class AuthService {
         role: user.role,
       },
       token,
-    });
+    };
   }
 
   async login(loginDto: LoginDto) {
@@ -79,13 +77,13 @@ export class AuthService {
     // 生成 token
     const token = await this.generateToken(user);
 
-    return success('登录成功', {
+    return {
       id: user.id,
       loginId: user.loginId,
       nickname: user.nickname,
       role: user.role,
       token,
-    });
+    };
   }
 
   private async generateToken(user: any) {
