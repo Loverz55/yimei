@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AppConfigService } from '../../config/config.service';
+import { TokenDto, TokenSchema } from '../dto/auth.dto';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -13,15 +14,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
-    if (!payload.sub || !payload.loginId) {
+  async validate(payload: unknown) {
+    const result = TokenSchema.safeParse(payload);
+
+    if (!result.success) {
       throw new UnauthorizedException('无效的token');
     }
 
-    return {
-      userId: payload.sub,
-      loginId: payload.loginId,
-      role: payload.role,
-    };
+    return result.data;
   }
 }
