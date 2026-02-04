@@ -26,6 +26,7 @@ export function ProviderSelector() {
         toast.error(msg);
         return;
       }
+
       setProviders(data);
 
       // 默认选择第一个

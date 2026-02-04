@@ -1,24 +1,30 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Wrench, Users, BarChart3, Boxes, ArrowLeft } from "lucide-react";
 
 const navItems = [
   {
-    title: 'Provider配置',
-    href: '/admin/providers',
-    icon: '🔧',
+    title: "Provider配置",
+    href: "/admin/providers",
+    icon: Wrench,
   },
   {
-    title: '用户管理',
-    href: '/admin/users',
-    icon: '👥',
+    title: "用户管理",
+    href: "/admin/users",
+    icon: Users,
   },
   {
-    title: '生成统计',
-    href: '/admin/stats',
-    icon: '📊',
+    title: "生成统计",
+    href: "/admin/stats",
+    icon: BarChart3,
+  },
+  {
+    title: "模型管理",
+    href: "/admin/models",
+    icon: Boxes,
   },
 ];
 
@@ -33,21 +39,26 @@ export function AdminSidebar() {
       </div>
 
       <nav className="space-y-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              pathname === item.href
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-muted'
-            )}
-          >
-            <span className="text-lg">{item.icon}</span>
-            {item.title}
-          </Link>
-        ))}
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = pathname === item.href;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted",
+              )}
+            >
+              <Icon className="h-5 w-5" aria-hidden="true" />
+              {item.title}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="mt-8 pt-8 border-t">
@@ -55,7 +66,8 @@ export function AdminSidebar() {
           href="/poster-gen"
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          ← 返回海报生成
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          返回海报生成
         </Link>
       </div>
     </div>

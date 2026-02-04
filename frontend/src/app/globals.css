@@ -1,19 +1,53 @@
 @import "tailwindcss";
 
+@theme inline {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(0 0% 17%);
+
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(0 0% 17%);
+
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(0 0% 17%);
+
+  --color-primary: hsl(343 30% 56%);
+  --color-primary-foreground: hsl(32 100% 98%);
+
+  --color-secondary: hsl(30 20% 79%);
+  --color-secondary-foreground: hsl(0 0% 17%);
+
+  --color-muted: hsl(30 20% 79%);
+  --color-muted-foreground: hsl(30 10% 50%);
+
+  --color-accent: hsl(42 44% 58%);
+  --color-accent-foreground: hsl(0 0% 17%);
+
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(32 100% 98%);
+
+  --color-border: hsl(30 20% 79%);
+  --color-input: hsl(30 20% 79%);
+  --color-ring: hsl(343 30% 56%);
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
 :root {
   /* 医美奢华色系 - 玫瑰金+奶油白 */
-  --cream: #FFFBF7;
-  --cream-dark: #F7F3EE;
-  --rose-gold: #B76E79;
-  --rose-gold-light: #D4A5A5;
-  --rose-gold-pale: #F5E6E8;
-  --charcoal: #2C2C2C;
-  --charcoal-light: #4A4A4A;
-  --warm-gray: #8B8178;
-  --warm-gray-light: #C4BDB4;
-  --gold-accent: #C9A962;
-  --sage: #A8B5A0;
-  --sage-light: #E8EDE5;
+  --cream: #fffbf7;
+  --cream-dark: #f7f3ee;
+  --rose-gold: #b76e79;
+  --rose-gold-light: #d4a5a5;
+  --rose-gold-pale: #f5e6e8;
+  --charcoal: #2c2c2c;
+  --charcoal-light: #4a4a4a;
+  --warm-gray: #8b8178;
+  --warm-gray-light: #c4bdb4;
+  --gold-accent: #c9a962;
+  --sage: #a8b5a0;
+  --sage-light: #e8ede5;
 
   /* shadcn/ui CSS 变量 */
   --background: 0 0% 100%;
@@ -47,8 +81,12 @@
   --radius: 0.5rem;
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background: var(--cream);
@@ -66,23 +104,42 @@ body {
 
 /* 优雅动画 */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .animate-fade-up {
@@ -93,17 +150,32 @@ body {
   animation: float 6s ease-in-out infinite;
 }
 
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-.delay-5 { animation-delay: 0.5s; }
+.delay-1 {
+  animation-delay: 0.1s;
+}
+.delay-2 {
+  animation-delay: 0.2s;
+}
+.delay-3 {
+  animation-delay: 0.3s;
+}
+.delay-4 {
+  animation-delay: 0.4s;
+}
+.delay-5 {
+  animation-delay: 0.5s;
+}
 
 /* 装饰线 */
 .line-elegant {
   width: 60px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--rose-gold), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--rose-gold),
+    transparent
+  );
 }
 
 /* 按钮 */
@@ -126,7 +198,7 @@ body {
 }
 
 .btn-luxury::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: var(--rose-gold);
@@ -167,18 +239,22 @@ body {
 /* 卡片 */
 .card-elegant {
   background: white;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .card-elegant:hover {
   transform: translateY(-8px);
-  box-shadow: 0 30px 60px -20px rgba(0,0,0,0.1);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.1);
 }
 
 /* 文字渐变 */
 .text-gradient {
-  background: linear-gradient(135deg, var(--rose-gold) 0%, var(--gold-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--rose-gold) 0%,
+    var(--gold-accent) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -186,7 +262,7 @@ body {
 
 /* 噪点纹理 */
 .noise-overlay::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
