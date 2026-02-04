@@ -29,5 +29,6 @@ import { AppConfigService } from '../config/config.service';
       inject: [AppConfigService],
     },
   ],
+  exports: [UploadService, S3Client],
 })
 export class UploadModule {}
