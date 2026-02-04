@@ -17,11 +17,22 @@ import {
 import { UploadService } from '../upload/upload.service';
 import { StabilityProvider } from './providers/stability.provider';
 import { OpenAIProvider } from './providers/openai.provider';
+import { GeminiProvider } from './providers/gemini.provider';
 
 @Injectable()
 export class ImageGenService implements OnModuleInit {
   private readonly logger = new Logger(ImageGenService.name);
   private providerInstances: Map<number, BaseImageProvider> = new Map();
+
+  // Provider 类型映射表
+  private providerClassMap = new Map<
+    string,
+    new (httpService: HttpService) => BaseImageProvider
+  >([
+    ['stability', StabilityProvider],
+    ['openai', OpenAIProvider],
+    ['gemini', GeminiProvider],
+  ]);
 
   constructor(
     private readonly httpService: HttpService,
@@ -76,20 +87,14 @@ export class ImageGenService implements OnModuleInit {
    * 根据配置创建 Provider 实例
    */
   private createProvider(config: AiModelConfig): BaseImageProvider | null {
-    let provider: BaseImageProvider;
+    const ProviderClass = this.providerClassMap.get(config.provider);
 
-    switch (config.provider) {
-      case 'stability':
-        provider = new StabilityProvider(this.httpService);
-        break;
-      case 'openai':
-        provider = new OpenAIProvider(this.httpService);
-        break;
-      default:
-        this.logger.warn(`未知的服务类型：${config.provider}`);
-        return null;
+    if (!ProviderClass) {
+      this.logger.warn(`未知的服务类型：${config.provider}`);
+      return null;
     }
 
+    const provider = new ProviderClass(this.httpService);
     provider.setConfig(config);
     return provider;
   }
@@ -263,12 +268,12 @@ export class ImageGenService implements OnModuleInit {
     const imageUrlResult = await this.uploadService.getFileUrl(dto.imageId);
     const maskUrlResult = await this.uploadService.getFileUrl(dto.maskId);
 
-    if (!imageUrlResult.data || !maskUrlResult.data) {
+    if (!imageUrlResult || !maskUrlResult) {
       throw new BadRequestException('获取文件访问地址失败');
     }
 
-    const imageUrl = imageUrlResult.data.url;
-    const maskUrl = maskUrlResult.data.url;
+    const imageUrl = imageUrlResult.url;
+    const maskUrl = maskUrlResult.url;
 
     // 选择 Provider
     let provider: BaseImageProvider;
@@ -360,6 +365,10 @@ export class ImageGenService implements OnModuleInit {
    * 获取用户的生成历史
    */
   async getUserGenerations(userId: number, limit = 20, offset = 0) {
+    this.logger.log(
+      `查询用户 ${userId} 的图片生成历史，limit=${limit}, offset=${offset}`,
+    );
+
     const generations = await this.prisma.imageGeneration.findMany({
       where: { userId },
       include: {
@@ -369,6 +378,8 @@ export class ImageGenService implements OnModuleInit {
       take: limit,
       skip: offset,
     });
+
+    this.logger.log(`找到 ${generations.length} 条记录`);
 
     return generations;
   }

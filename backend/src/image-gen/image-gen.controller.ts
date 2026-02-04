@@ -18,6 +18,9 @@ import {
 } from './dto/generate-image.dto';
 import { Result, success } from '../common/result';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { userInfo } from 'os';
+import { UserInfo } from 'src/auth/decorators/current-user.decorator';
+import { TokenDto } from 'src/auth/dto/auth.dto';
 
 @ApiTags('图像生成')
 @Controller('image-gen')
@@ -28,30 +31,30 @@ export class ImageGenController {
 
   @Post('generate')
   @ApiOperation({ summary: '生成图片（文生图）' })
-  async generateImage(@Body() dto: GenerateImageDto, @Req() req: any) {
-    const userId = req.user.userId;
-    const result = await this.imageGenService.generateImage(dto, userId);
+  async generateImage(
+    @Body() dto: GenerateImageDto,
+    @UserInfo() user: TokenDto,
+  ) {
+    const result = await this.imageGenService.generateImage(dto, user.id);
     return success('图片生成成功', result);
   }
 
   @Post('inpaint')
   @ApiOperation({ summary: '图片局部修改（Inpainting）' })
-  async inpaint(@Body() dto: InpaintImageDto, @Req() req: any) {
-    const userId = req.user.userId;
-    const result = await this.imageGenService.inpaint(dto, userId);
+  async inpaint(@Body() dto: InpaintImageDto, @UserInfo() user: TokenDto) {
+    const result = await this.imageGenService.inpaint(dto, user.id);
     return success('图片修改成功', result);
   }
 
   @Get('history')
   @ApiOperation({ summary: '获取用户的图片生成历史' })
   async getUserHistory(
-    @Req() req: any,
+    @UserInfo() user: TokenDto,
     @Query('limit', ParseIntPipe) limit: number = 20,
     @Query('offset', ParseIntPipe) offset: number = 0,
   ): Promise<Result<any>> {
-    const userId = req.user.userId;
     const generations = await this.imageGenService.getUserGenerations(
-      userId,
+      user.id,
       limit,
       offset,
     );
@@ -62,12 +65,11 @@ export class ImageGenController {
   @ApiOperation({ summary: '获取单个生成记录详情' })
   async getGenerationById(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: any,
+    @UserInfo() user: TokenDto,
   ): Promise<Result<any>> {
-    const userId = req.user.userId;
     const generation = await this.imageGenService.getGenerationById(
       id,
-      userId,
+      user.id,
     );
     return success('获取记录成功', generation);
   }

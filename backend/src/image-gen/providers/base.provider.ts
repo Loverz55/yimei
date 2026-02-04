@@ -4,7 +4,7 @@
 export interface AiModelConfig {
   id: number;
   name: string;
-  provider: string; // stability, openai, aliyun
+  provider: string; // stability, openai, gemini, aliyun
   type: string; // image-gen, text-gen, embedding
   modelId?: string | null;
   baseUrl: string;
@@ -21,7 +21,7 @@ export interface AiModelConfig {
  */
 export abstract class BaseImageProvider {
   /**
-   * Provider类型名称（如 'stability', 'openai', 'aliyun'）
+   * Provider类型名称（如 'stability', 'openai', 'gemini', 'aliyun'）
    */
   abstract readonly providerType: string;
 
