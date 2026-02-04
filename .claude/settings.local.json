@@ -3,14 +3,7 @@
     "allow": [
       "Bash(pnpm add:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(test:*)",
-      "Bash(pnpm install:*)",
-      "Bash(pnpm approve-builds:*)",
-      "Bash(pnpm build:*)",
-      "Bash(npx tsc --showConfig)",
-      "Bash(npx prisma format)",
-      "Bash(pnpm run:*)",
-      "Bash(tree:*)"
+      "Bash(test:*)"
     ]
   }
 }

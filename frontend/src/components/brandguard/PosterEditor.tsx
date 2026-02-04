@@ -1,33 +1,31 @@
-"use client";
+'use client'
 
-import { Template } from "@/type/brandguard";
-import { usePosterEditor } from "@/hooks/brandguard";
+import { useState } from 'react'
+import { brandguardApi, type Template } from '@/lib/brandguard-api'
 
 interface PosterEditorProps {
-  template: Template;
-  content: string;
-  onContentChange: (content: string) => void;
+  template: Template
+  content: string
+  onContentChange: (content: string) => void
 }
 
-export default function PosterEditor({
-  template,
-  content,
-  onContentChange,
-}: PosterEditorProps) {
-  // 使用海报编辑器hook
-  const { preview, generating, generatePoster, setContent } = usePosterEditor({
-    template,
-    initialContent: content,
-    onSuccess: (imageUrl) => {
-      console.log("海报生成成功:", imageUrl);
-    },
-  });
+export default function PosterEditor({ template, content, onContentChange }: PosterEditorProps) {
+  const [preview, setPreview] = useState<string>('')
+  const [generating, setGenerating] = useState(false)
 
-  // 同步外部content变化到hook
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent);
-    onContentChange(newContent);
-  };
+  const handleGenerate = async () => {
+    setGenerating(true)
+    try {
+      const result = await brandguardApi.generatePoster({
+        templateId: template.id,
+        content,
+        size: 'moments'
+      })
+      setPreview(result.imageUrl)
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -37,18 +35,18 @@ export default function PosterEditor({
         </label>
         <textarea
           value={content}
-          onChange={(e) => handleContentChange(e.target.value)}
+          onChange={e => onContentChange(e.target.value)}
           placeholder="输入海报文案内容..."
           className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00A0E9] focus:border-transparent resize-none"
         />
       </div>
 
       <button
-        onClick={generatePoster}
+        onClick={handleGenerate}
         disabled={!content || generating}
         className="w-full bg-[#00A0E9] text-white py-3 rounded-lg font-medium hover:bg-[#0090D0] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
       >
-        {generating ? "生成中..." : "生成海报预览"}
+        {generating ? '生成中...' : '生成海报预览'}
       </button>
 
       {preview && (
@@ -60,5 +58,5 @@ export default function PosterEditor({
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { ComplianceCheckResult } from '@/type/brandguard'
 import { useEffect, useState } from 'react'
+import { brandguardApi, type ComplianceCheckResult } from '@/lib/brandguard-api'
 
 interface ComplianceCheckerProps {
   content: string
@@ -19,9 +19,9 @@ export default function ComplianceChecker({ content }: ComplianceCheckerProps) {
 
     const timer = setTimeout(() => {
       setChecking(true)
-      // brandguardApi.checkCompliance(content)
-      //   .then(setResult)
-      //   .finally(() => setChecking(false))
+      brandguardApi.checkCompliance(content)
+        .then(setResult)
+        .finally(() => setChecking(false))
     }, 500)
 
     return () => clearTimeout(timer)
