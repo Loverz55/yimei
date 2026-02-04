@@ -21,7 +21,7 @@ export class AuthService {
     const { loginId, password, nickname } = registerDto;
 
     // 检查用户是否已存在
-    const existingUser = await this.prisma.client.user.findUnique({
+    const existingUser = await this.prisma.user.findUnique({
       where: { loginId },
     });
 
@@ -34,7 +34,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // 创建用户
-    const user = await this.prisma.client.user.create({
+    const user = await this.prisma.user.create({
       data: {
         loginId,
         password: hashedPassword,
@@ -48,7 +48,7 @@ export class AuthService {
 
     return success('注册成功', {
       user: {
-        userId: user.id,
+        id: user.id,
         loginId: user.loginId,
         nickname: user.nickname,
         role: user.role,
@@ -61,7 +61,7 @@ export class AuthService {
     const { loginId, password } = loginDto;
 
     // 查找用户
-    const user = await this.prisma.client.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { loginId },
     });
 
@@ -80,7 +80,7 @@ export class AuthService {
     const token = await this.generateToken(user);
 
     return success('登录成功', {
-      userId: user.id,
+      id: user.id,
       loginId: user.loginId,
       nickname: user.nickname,
       role: user.role,
@@ -90,7 +90,7 @@ export class AuthService {
 
   private async generateToken(user: any) {
     const payload = {
-      sub: user.id,
+      id: user.id,
       loginId: user.loginId,
       role: user.role,
     };
@@ -99,7 +99,7 @@ export class AuthService {
   }
 
   async validateUser(userId: number) {
-    const user = await this.prisma.client.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
