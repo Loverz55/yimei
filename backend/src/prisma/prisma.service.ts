@@ -1,19 +1,26 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { prisma } from './prisma.client';
-import { Prisma } from '../../generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient, Prisma } from '../../generated/prisma/client';
 
 export type PrismaTx = Prisma.TransactionClient;
 
 @Injectable()
-export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  client = prisma;
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  constructor() {
+    const connectionString = process.env.DATABASE_URL!;
+    const adapter = new PrismaPg({ connectionString });
+
+    super({
+      adapter,
+    });
+  }
 
   async onModuleInit() {
-    await this.client.$connect();
+    await this.$connect();
   }
 
   async onModuleDestroy() {
-    await this.client.$disconnect();
+    await this.$disconnect();
   }
 
   async tx<T>(
@@ -24,6 +31,6 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       isolationLevel?: Prisma.TransactionIsolationLevel;
     },
   ) {
-    return this.client.$transaction((tx) => fn(tx), options);
+    return this.$transaction((tx) => fn(tx), options);
   }
 }
