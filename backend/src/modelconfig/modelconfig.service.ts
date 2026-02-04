@@ -18,6 +18,7 @@ import {
 import { BaseImageProvider } from '../image-gen/providers/base.provider';
 import { StabilityProvider } from '../image-gen/providers/stability.provider';
 import { OpenAIProvider } from '../image-gen/providers/openai.provider';
+import { GeminiProvider } from 'src/image-gen/providers/gemini.provider';
 
 interface RateLimitInfo {
   configId: number;
@@ -50,7 +51,9 @@ export class ModelconfigService {
         data: createModelconfigDto as any,
       });
 
-      this.logger.log(`创建了新的Provider配置：${config.name} (ID: ${config.id})`);
+      this.logger.log(
+        `创建了新的Provider配置：${config.name} (ID: ${config.id})`,
+      );
 
       return config;
     } catch (error) {
@@ -165,7 +168,9 @@ export class ModelconfigService {
     try {
       const provider = this.createProvider(config);
       if (!provider) {
-        throw new BadRequestException(`不支持的Provider类型：${config.provider}`);
+        throw new BadRequestException(
+          `不支持的Provider类型：${config.provider}`,
+        );
       }
 
       const isValid = await provider.validateConfig();
@@ -182,9 +187,7 @@ export class ModelconfigService {
       };
     } catch (error) {
       this.logger.error(`配置验证出错 (ID: ${id})`, error as any);
-      throw new BadRequestException(
-        '配置验证失败：' + (error as any)?.message,
-      );
+      throw new BadRequestException('配置验证失败：' + (error as any)?.message);
     }
   }
 
@@ -209,7 +212,10 @@ export class ModelconfigService {
     };
 
     if (statsDto?.startDate) {
-      where.createdAt = { ...where.createdAt, gte: new Date(statsDto.startDate) };
+      where.createdAt = {
+        ...where.createdAt,
+        gte: new Date(statsDto.startDate),
+      };
     }
     if (statsDto?.endDate) {
       where.createdAt = { ...where.createdAt, lte: new Date(statsDto.endDate) };
@@ -450,7 +456,9 @@ export class ModelconfigService {
       data: { config: updatedConfig },
     });
 
-    this.logger.log(`删除了参数预设「${presetName}」：${config.name} (ID: ${id})`);
+    this.logger.log(
+      `删除了参数预设「${presetName}」：${config.name} (ID: ${id})`,
+    );
   }
 
   /**
@@ -480,6 +488,9 @@ export class ModelconfigService {
         break;
       case 'openai':
         provider = new OpenAIProvider(this.httpService);
+        break;
+      case 'gemini':
+        provider = new GeminiProvider(this.httpService);
         break;
       default:
         this.logger.warn(`未知的Provider类型：${config.provider}`);

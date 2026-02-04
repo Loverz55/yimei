@@ -4,8 +4,8 @@ import z from 'zod';
 const createModelSchema = z.object({
   name: z.string().min(1, { message: '配置名称不能为空' }).describe('配置名称'),
   provider: z
-    .enum(['stability', 'openai', 'aliyun'], {
-      message: 'provider类型必须是stability/openai/aliyun之一',
+    .enum(['stability', 'openai', 'aliyun',"gemini"], {
+      message: 'provider类型必须是stability/openai/aliyun/gemini之一',
     })
     .describe('Provider类型'),
   type: z
@@ -30,8 +30,8 @@ const queryModelSchema = z.object({
   provider: z.string().optional().describe('按Provider类型筛选'),
   type: z.string().optional().describe('按服务类型筛选'),
   enabled: z.boolean().optional().describe('按启用状态筛选'),
-  page: z.number().int().positive().default(1).describe('页码'),
-  pageSize: z
+  page: z.coerce.number().int().positive().default(1).describe('页码'),
+  pageSize: z.coerce
     .number()
     .int()
     .positive()
