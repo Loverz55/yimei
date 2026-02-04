@@ -31,7 +31,7 @@ export class UploadService {
     const key = `uploads/${new Date().getFullYear()}/${new Date().getMonth() + 1}/${uniqueFileName}`;
 
     // 创建数据库记录（状态为pending）
-    const file = await this.prisma.client.file.create({
+    const file = await this.prisma.file.create({
       data: {
         key,
         contentType,
@@ -57,7 +57,7 @@ export class UploadService {
 
   // 确认上传成功
   async confirmUpload(fileId: number, size?: number) {
-    const file = await this.prisma.client.file.findUnique({
+    const file = await this.prisma.file.findUnique({
       where: { id: fileId },
     });
 
@@ -65,7 +65,7 @@ export class UploadService {
       throw new NotFoundException('文件记录不存在');
     }
 
-    const updatedFile = await this.prisma.client.file.update({
+    const updatedFile = await this.prisma.file.update({
       where: { id: fileId },
       data: {
         status: 'uploaded',
@@ -82,7 +82,7 @@ export class UploadService {
 
   // 获取文件访问URL（生成GET预签名URL）
   async getFileUrl(fileId: number, expiresIn: number = 60 * 60) {
-    const file = await this.prisma.client.file.findUnique({
+    const file = await this.prisma.file.findUnique({
       where: { id: fileId },
     });
 
@@ -114,7 +114,7 @@ export class UploadService {
 
   // 根据key获取文件访问URL
   async getFileUrlByKey(key: string, expiresIn: number = 60 * 60) {
-    const file = await this.prisma.client.file.findUnique({
+    const file = await this.prisma.file.findUnique({
       where: { key },
     });
 
@@ -146,7 +146,7 @@ export class UploadService {
 
   // 获取文件信息
   async getFileById(fileId: number) {
-    const file = await this.prisma.client.file.findUnique({
+    const file = await this.prisma.file.findUnique({
       where: { id: fileId },
     });
 
@@ -169,5 +169,54 @@ export class UploadService {
     };
 
     return mimeTypes[contentType] || '';
+  }
+
+  /**
+   * 直接上传Buffer到S3并创建文件记录
+   * 用于AI生成的图片等场景
+   */
+  async uploadBuffer(
+    buffer: Buffer,
+    filename: string,
+    contentType: string,
+    userId?: number,
+  ): Promise<{ fileId: number; url: string; key: string }> {
+    const bucket = this.appConfig.s3Config.bucket;
+    const key = `generated/${new Date().getFullYear()}/${new Date().getMonth() + 1}/${filename}`;
+
+    // 直接上传到S3
+    const putCmd = new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    });
+
+    await this.s3.send(putCmd);
+
+    // 创建数据库记录
+    const file = await this.prisma.file.create({
+      data: {
+        key,
+        contentType,
+        size: buffer.length,
+        status: 'uploaded',
+        userId,
+      },
+    });
+
+    // 生成访问URL
+    const getCmd = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    const url = await getSignedUrl(this.s3, getCmd, { expiresIn: 60 * 60 });
+
+    return {
+      fileId: file.id,
+      url,
+      key,
+    };
   }
 }
