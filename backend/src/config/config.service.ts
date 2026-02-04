@@ -9,7 +9,10 @@ import type { StringValue } from 'ms';
 @Injectable()
 export class AppConfigService {
   constructor(
-    private readonly configService: NestConfigService<EnvironmentVariables, true>,
+    private readonly configService: NestConfigService<
+      EnvironmentVariables,
+      true
+    >,
   ) {}
 
   // 应用配置
@@ -40,7 +43,7 @@ export class AppConfigService {
   }
 
   get jwtExpiresIn(): StringValue {
-    return this.configService.get('JWT_EXPIRES_IN', { infer: true }) as StringValue;
+    return this.configService.get('JWT_EXPIRES_IN', { infer: true });
   }
 
   // S3/OSS 配置
@@ -50,7 +53,9 @@ export class AppConfigService {
       bucket: this.configService.get('S3_BUCKET', { infer: true }),
       region: this.configService.get('AWS_REGION', { infer: true }),
       accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID', { infer: true }),
-      secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY', { infer: true }),
+      secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY', {
+        infer: true,
+      }),
     };
   }
 }

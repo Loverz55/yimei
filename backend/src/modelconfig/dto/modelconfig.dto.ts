@@ -4,7 +4,7 @@ import z from 'zod';
 const createModelSchema = z.object({
   name: z.string().min(1, { message: '配置名称不能为空' }).describe('配置名称'),
   provider: z
-    .enum(['stability', 'openai', 'aliyun',"gemini"], {
+    .enum(['stability', 'openai', 'aliyun', 'gemini'], {
       message: 'provider类型必须是stability/openai/aliyun/gemini之一',
     })
     .describe('Provider类型'),
@@ -18,7 +18,10 @@ const createModelSchema = z.object({
     .url({ message: '必须是有效的URL格式' })
     .describe('API基础URL'),
   apiKey: z.string().min(1, { message: 'API Key不能为空' }).describe('API密钥'),
-  config: z.record(z.string(), z.any()).optional().describe('额外配置（JSON格式）'),
+  config: z
+    .record(z.string(), z.any())
+    .optional()
+    .describe('额外配置（JSON格式）'),
   enabled: z.boolean().default(true).describe('是否启用'),
   priority: z.number().int().default(0).describe('优先级，数字越大越优先'),
   description: z.string().optional().describe('描述信息'),

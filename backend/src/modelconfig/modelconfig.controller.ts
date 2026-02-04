@@ -57,7 +57,10 @@ export class ModelconfigController {
     @Param('id') id: string,
     @Body() updateModelconfigDto: UpdateModelconfigDto,
   ) {
-    const data = await this.modelconfigService.update(+id, updateModelconfigDto);
+    const data = await this.modelconfigService.update(
+      +id,
+      updateModelconfigDto,
+    );
     return success('配置更新成功', data);
   }
 
@@ -80,7 +83,10 @@ export class ModelconfigController {
 
   @Get(':id/cost-stats')
   @ApiOperation({ summary: '获取成本统计（按配置维度）' })
-  async getCostStats(@Param('id') id: string, @Query() statsDto?: CostStatsDto) {
+  async getCostStats(
+    @Param('id') id: string,
+    @Query() statsDto?: CostStatsDto,
+  ) {
     const data = await this.modelconfigService.getCostStats(+id, statsDto);
     return success('成本统计查询成功', data);
   }

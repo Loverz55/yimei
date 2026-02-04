@@ -6,7 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, TokenDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +42,7 @@ export class AuthService {
     });
 
     // 生成 token
-    const token = await this.generateToken(user);
+    const token = this.generateToken(user);
 
     return {
       user: {
@@ -75,7 +75,7 @@ export class AuthService {
     }
 
     // 生成 token
-    const token = await this.generateToken(user);
+    const token = this.generateToken(user);
 
     return {
       id: user.id,
@@ -86,7 +86,7 @@ export class AuthService {
     };
   }
 
-  private async generateToken(user: any) {
+  private generateToken(user: TokenDto) {
     const payload = {
       id: user.id,
       loginId: user.loginId,

@@ -1,3 +1,4 @@
+//事件订阅
 export const AI_MODEL_CONFIG_CHANGED = 'aiModelConfig.changed';
 
 export type AiModelConfigChangedPayload = {

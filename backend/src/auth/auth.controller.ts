@@ -10,7 +10,6 @@ import { RegisterDto, TokenDto } from './dto/auth.dto';
 import { LoginDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { UserInfo } from './decorators/current-user.decorator';
-import { User } from 'generated/prisma/client';
 import { success } from '../common/result';
 
 @ApiTags('认证')

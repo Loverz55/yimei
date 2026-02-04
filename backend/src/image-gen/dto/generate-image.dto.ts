@@ -39,13 +39,7 @@ const GenerateImageSchema = z.object({
     .optional()
     .describe('CFG比例，控制提示词遵循度'),
   seed: z.number().int().optional().describe('随机种子，用于复现结果'),
-  samples: z
-    .number()
-    .int()
-    .min(1)
-    .max(4)
-    .default(1)
-    .describe('生成图片数量'),
+  samples: z.number().int().min(1).max(4).default(1).describe('生成图片数量'),
   model: z.string().optional().describe('指定使用的具体模型'),
 });
 
@@ -62,12 +56,7 @@ const InpaintImageSchema = z.object({
     .optional()
     .describe('指定使用的Provider配置ID'),
   provider: z.enum(['stability', 'openai', 'auto']).default('auto'),
-  strength: z
-    .number()
-    .min(0)
-    .max(1)
-    .optional()
-    .describe('修改强度，0-1之间'),
+  strength: z.number().min(0).max(1).optional().describe('修改强度，0-1之间'),
   steps: z.number().int().min(10).max(150).optional(),
   cfgScale: z.number().min(1).max(20).optional(),
   seed: z.number().int().optional(),
