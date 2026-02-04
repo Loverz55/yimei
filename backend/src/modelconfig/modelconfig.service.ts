@@ -19,6 +19,8 @@ import { BaseImageProvider } from '../image-gen/providers/base.provider';
 import { StabilityProvider } from '../image-gen/providers/stability.provider';
 import { OpenAIProvider } from '../image-gen/providers/openai.provider';
 import { GeminiProvider } from 'src/image-gen/providers/gemini.provider';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AI_MODEL_CONFIG_CHANGED } from 'src/common/events';
 
 interface RateLimitInfo {
   configId: number;
@@ -37,6 +39,7 @@ export class ModelconfigService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly httpService: HttpService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     // 定期清理过期的限流记录（每分钟）
     setInterval(() => this.cleanupRateLimits(), 60000);
@@ -54,6 +57,12 @@ export class ModelconfigService {
       this.logger.log(
         `创建了新的Provider配置：${config.name} (ID: ${config.id})`,
       );
+
+      this.eventEmitter.emit(AI_MODEL_CONFIG_CHANGED, {
+        type: 'image-gen',
+        configId: config.id,
+        action: 'create',
+      });
 
       return config;
     } catch (error) {
@@ -125,6 +134,12 @@ export class ModelconfigService {
         data: updateModelconfigDto as any,
       });
 
+      this.eventEmitter.emit(AI_MODEL_CONFIG_CHANGED, {
+        type: 'image-gen',
+        configId: id,
+        action: 'update',
+      });
+
       this.logger.log(`更新了Provider配置：${updated.name} (ID: ${id})`);
 
       return updated;
@@ -148,6 +163,12 @@ export class ModelconfigService {
 
     await this.prisma.aiModelConfig.delete({
       where: { id },
+    });
+
+    this.eventEmitter.emit(AI_MODEL_CONFIG_CHANGED, {
+      type: 'image-gen',
+      configId: id,
+      action: 'delet',
     });
 
     this.logger.log(`删除了Provider配置：${existing.name} (ID: ${id})`);

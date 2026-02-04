@@ -12,6 +12,7 @@ import { validate } from './config/env.validation';
 import { AppConfigModule } from './config/config.module';
 import { ImageGenModule } from './image-gen/image-gen.module';
 import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -19,6 +20,12 @@ import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
       isGlobal: true,
       validate,
       expandVariables: true,
+    }),
+    EventEmitterModule.forRoot({
+      // 可选配置
+      wildcard: false,
+      delimiter: '.',
+      maxListeners: 20,
     }),
     AppConfigModule,
     AuthModule,

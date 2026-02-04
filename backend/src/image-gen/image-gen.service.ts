@@ -18,6 +18,11 @@ import { UploadService } from '../upload/upload.service';
 import { StabilityProvider } from './providers/stability.provider';
 import { OpenAIProvider } from './providers/openai.provider';
 import { GeminiProvider } from './providers/gemini.provider';
+import { OnEvent } from '@nestjs/event-emitter';
+import {
+  AI_MODEL_CONFIG_CHANGED,
+  AiModelConfigChangedPayload,
+} from 'src/common/events';
 
 @Injectable()
 export class ImageGenService implements OnModuleInit {
@@ -437,5 +442,18 @@ export class ImageGenService implements OnModuleInit {
       success: true,
       count: this.providerInstances.size,
     };
+  }
+
+  //监听数据库变化，重新加载配置
+  @OnEvent(AI_MODEL_CONFIG_CHANGED)
+  async handleConfigChanged(payload: AiModelConfigChangedPayload) {
+    // 只处理 image-gen 的配置变动
+    if (payload.type && payload.type !== 'image-gen') return;
+
+    this.logger.log(
+      `收到配置变更事件：action=${payload.action}, configId=${payload.configId}，开始 reloadProviders...`,
+    );
+
+    await this.reloadProviders();
   }
 }
