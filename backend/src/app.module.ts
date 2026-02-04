@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_PIPE, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
@@ -11,6 +11,7 @@ import { ModelReqModule } from './model-req/model-req.module';
 import { validate } from './config/env.validation';
 import { AppConfigModule } from './config/config.module';
 import { ImageGenModule } from './image-gen/image-gen.module';
+import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
 
 @Module({
   imports: [
@@ -36,6 +37,10 @@ import { ImageGenModule } from './image-gen/image-gen.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: ZodSerializerInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: ZodExceptionFilter,
     },
   ],
 })

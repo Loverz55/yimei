@@ -9,7 +9,8 @@
       "Bash(pnpm build:*)",
       "Bash(npx tsc --showConfig)",
       "Bash(npx prisma format)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(tree:*)"
     ]
   }
 }
