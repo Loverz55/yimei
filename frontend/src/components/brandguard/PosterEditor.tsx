@@ -1,31 +1,35 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { brandguardApi, type Template } from '@/lib/brandguard-api'
+import { Template } from "@/type/brandguard";
+import { useState } from "react";
 
 interface PosterEditorProps {
-  template: Template
-  content: string
-  onContentChange: (content: string) => void
+  template: Template;
+  content: string;
+  onContentChange: (content: string) => void;
 }
 
-export default function PosterEditor({ template, content, onContentChange }: PosterEditorProps) {
-  const [preview, setPreview] = useState<string>('')
-  const [generating, setGenerating] = useState(false)
+export default function PosterEditor({
+  template,
+  content,
+  onContentChange,
+}: PosterEditorProps) {
+  const [preview, setPreview] = useState<string>("");
+  const [generating, setGenerating] = useState(false);
 
   const handleGenerate = async () => {
-    setGenerating(true)
+    setGenerating(true);
     try {
-      const result = await brandguardApi.generatePoster({
-        templateId: template.id,
-        content,
-        size: 'moments'
-      })
-      setPreview(result.imageUrl)
+      // const result = await brandguardApi.generatePoster({
+      //   templateId: template.id,
+      //   content,
+      //   size: 'moments'
+      // })
+      // setPreview(result.imageUrl)
     } finally {
-      setGenerating(false)
+      setGenerating(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -35,7 +39,7 @@ export default function PosterEditor({ template, content, onContentChange }: Pos
         </label>
         <textarea
           value={content}
-          onChange={e => onContentChange(e.target.value)}
+          onChange={(e) => onContentChange(e.target.value)}
           placeholder="输入海报文案内容..."
           className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00A0E9] focus:border-transparent resize-none"
         />
@@ -46,7 +50,7 @@ export default function PosterEditor({ template, content, onContentChange }: Pos
         disabled={!content || generating}
         className="w-full bg-[#00A0E9] text-white py-3 rounded-lg font-medium hover:bg-[#0090D0] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
       >
-        {generating ? '生成中...' : '生成海报预览'}
+        {generating ? "生成中..." : "生成海报预览"}
       </button>
 
       {preview && (
@@ -58,5 +62,5 @@ export default function PosterEditor({ template, content, onContentChange }: Pos
         </div>
       )}
     </div>
-  )
+  );
 }
