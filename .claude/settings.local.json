@@ -7,7 +7,9 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm approve-builds:*)",
       "Bash(pnpm build:*)",
-      "Bash(npx tsc --showConfig)"
+      "Bash(npx tsc --showConfig)",
+      "Bash(npx prisma format)",
+      "Bash(pnpm run:*)"
     ]
   }
 }
