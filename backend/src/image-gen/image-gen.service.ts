@@ -421,10 +421,7 @@ export class ImageGenService implements OnModuleInit {
       },
     });
 
-    return {
-      list: configs,
-      message: '获取可用图像生成服务列表成功',
-    };
+    return configs;
   }
 
   /**
