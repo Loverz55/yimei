@@ -10,6 +10,7 @@ import { ZodSerializerInterceptor } from 'nestjs-zod';
 import { ModelReqModule } from './model-req/model-req.module';
 import { validate } from './config/env.validation';
 import { AppConfigModule } from './config/config.module';
+import { ImageGenModule } from './image-gen/image-gen.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AppConfigModule } from './config/config.module';
     UploadModule,
     ModelconfigModule,
     ModelReqModule,
+    ImageGenModule,
   ],
   controllers: [],
   providers: [
