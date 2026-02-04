@@ -26,8 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" className={inter.variable}>
-      <Toaster />
-      <body className="antialiased font-sans">{children}</body>
+      <body className="antialiased font-sans">
+        <Toaster />
+        {children}
+      </body>
     </html>
   );
 }

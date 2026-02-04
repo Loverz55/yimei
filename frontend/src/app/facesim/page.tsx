@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUploader from '@/components/facesim/ImageUploader';
-import { uploadImage } from '@/lib/facesim-api';
 
 export default function FaceSimPage() {
   const router = useRouter();
@@ -16,8 +15,8 @@ export default function FaceSimPage() {
     setError(null);
 
     try {
-      const result = await uploadImage(file);
-      router.push(`/facesim/${result.id}`);
+      // const result = await uploadImage(file);
+      // router.push(`/facesim/${result.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '上传失败，请重试');
     } finally {
