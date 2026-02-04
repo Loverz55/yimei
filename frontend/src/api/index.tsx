@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // 后端统一返回格式
 interface ApiResponse<T = any> {
@@ -7,8 +7,12 @@ interface ApiResponse<T = any> {
   data?: T;
 }
 
-type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
-type ResponseInterceptor = <T>(response: ApiResponse<T>) => ApiResponse<T> | Promise<ApiResponse<T>>;
+type RequestInterceptor = (
+  config: RequestConfig,
+) => RequestConfig | Promise<RequestConfig>;
+type ResponseInterceptor = <T>(
+  response: ApiResponse<T>,
+) => ApiResponse<T> | Promise<ApiResponse<T>>;
 type ErrorInterceptor = (error: any) => any;
 
 interface RequestConfig extends RequestInit {
@@ -28,7 +32,7 @@ class ApiClient {
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
     this.defaultHeaders = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
   }
 
@@ -69,19 +73,19 @@ class ApiClient {
 
   // 设置 Token
   setToken(token: string) {
-    this.setHeader('Authorization', `Bearer ${token}`);
+    this.setHeader("Authorization", `Bearer ${token}`);
     return this;
   }
 
   // 清除 Token
   clearToken() {
-    this.removeHeader('Authorization');
+    this.removeHeader("Authorization");
     return this;
   }
 
   // 构建 URL（包含查询参数）
   private buildUrl(url: string, params?: Record<string, any>): string {
-    const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
+    const fullUrl = url.startsWith("http") ? url : `${this.baseURL}${url}`;
 
     if (!params || Object.keys(params).length === 0) {
       return fullUrl;
@@ -99,7 +103,9 @@ class ApiClient {
   }
 
   // 执行请求拦截器
-  private async executeRequestInterceptors(config: RequestConfig): Promise<RequestConfig> {
+  private async executeRequestInterceptors(
+    config: RequestConfig,
+  ): Promise<RequestConfig> {
     let finalConfig = config;
     for (const interceptor of this.requestInterceptors) {
       finalConfig = await interceptor(finalConfig);
@@ -108,7 +114,9 @@ class ApiClient {
   }
 
   // 执行响应拦截器
-  private async executeResponseInterceptors<T>(response: ApiResponse<T>): Promise<ApiResponse<T>> {
+  private async executeResponseInterceptors<T>(
+    response: ApiResponse<T>,
+  ): Promise<ApiResponse<T>> {
     let finalResponse = response;
     for (const interceptor of this.responseInterceptors) {
       finalResponse = await interceptor(finalResponse);
@@ -131,7 +139,13 @@ class ApiClient {
       // 执行请求拦截器
       const interceptedConfig = await this.executeRequestInterceptors(config);
 
-      const { url = '', params, data, timeout, ...fetchOptions } = interceptedConfig;
+      const {
+        url = "",
+        params,
+        data,
+        timeout,
+        ...fetchOptions
+      } = interceptedConfig;
 
       // 构建完整 URL
       const fullUrl = this.buildUrl(url, params);
@@ -148,7 +162,7 @@ class ApiClient {
         if (data instanceof FormData) {
           body = data;
           // FormData 不需要设置 Content-Type，浏览器会自动设置
-          delete (headers as any)['Content-Type'];
+          delete (headers as any)["Content-Type"];
         } else {
           body = JSON.stringify(data);
         }
@@ -176,9 +190,9 @@ class ApiClient {
 
       // 解析响应
       let responseData: any;
-      const contentType = response.headers.get('content-type');
+      const contentType = response.headers.get("content-type");
 
-      if (contentType?.includes('application/json')) {
+      if (contentType?.includes("application/json")) {
         responseData = await response.json();
       } else {
         responseData = await response.text();
@@ -191,7 +205,7 @@ class ApiClient {
         // HTTP 错误状态码，构造错误响应
         apiResponse = {
           code: 1,
-          msg: responseData?.msg || responseData?.message || '请求失败',
+          msg: responseData?.msg || responseData?.message || "请求失败",
           data: responseData?.data,
         };
       } else {
@@ -201,65 +215,75 @@ class ApiClient {
 
       // 执行响应拦截器
       return await this.executeResponseInterceptors(apiResponse);
-
     } catch (error) {
       // 执行错误拦截器
       const processedError = await this.executeErrorInterceptors(error);
 
       return {
         code: 1,
-        msg: processedError instanceof Error
-          ? processedError.message
-          : '网络错误',
+        msg:
+          processedError instanceof Error ? processedError.message : "网络错误",
       };
     }
   }
 
   // 便捷方法：GET
-  get<T = any>(url: string, config?: Omit<RequestConfig, 'url' | 'method'>) {
+  get<T = any>(url: string, config?: Omit<RequestConfig, "url" | "method">) {
     return this.request<T>({
       ...config,
       url,
-      method: 'GET',
+      method: "GET",
     });
   }
 
   // 便捷方法：POST
-  post<T = any>(url: string, data?: any, config?: Omit<RequestConfig, 'url' | 'method' | 'data'>) {
+  post<T = any>(
+    url: string,
+    data?: any,
+    config?: Omit<RequestConfig, "url" | "method" | "data">,
+  ) {
     return this.request<T>({
       ...config,
       url,
-      method: 'POST',
+      method: "POST",
       data,
     });
   }
 
   // 便捷方法：PUT
-  put<T = any>(url: string, data?: any, config?: Omit<RequestConfig, 'url' | 'method' | 'data'>) {
+  put<T = any>(
+    url: string,
+    data?: any,
+    config?: Omit<RequestConfig, "url" | "method" | "data">,
+  ) {
     return this.request<T>({
       ...config,
       url,
-      method: 'PUT',
+      method: "PUT",
       data,
     });
   }
 
   // 便捷方法：PATCH
-  patch<T = any>(url: string, data?: any, config?: Omit<RequestConfig, 'url' | 'method' | 'data'>) {
+  patch<T = any>(
+    url: string,
+    data?: any,
+    config?: Omit<RequestConfig, "url" | "method" | "data">,
+  ) {
     return this.request<T>({
       ...config,
       url,
-      method: 'PATCH',
+      method: "PATCH",
       data,
     });
   }
 
   // 便捷方法：DELETE
-  delete<T = any>(url: string, config?: Omit<RequestConfig, 'url' | 'method'>) {
+  delete<T = any>(url: string, config?: Omit<RequestConfig, "url" | "method">) {
     return this.request<T>({
       ...config,
       url,
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 }
@@ -269,13 +293,16 @@ const api = new ApiClient();
 
 // 添加默认拦截器示例（可选）
 api.addRequestInterceptor((config) => {
-  // 从 localStorage 获取 token（与 tokenAtom 的 key 保持一致）
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token');
+  // 从 localStorage 获取 token（与 tokenAtom 的 key "auth_token" 保持一致）
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth_token");
     if (token) {
+      // localStorage.getItem 返回的是字符串，如果存储的是 JSON，需要解析
+      // atomWithStorage 默认会序列化，所以需要解析 JSON
+      const parsedToken = token.startsWith('"') ? JSON.parse(token) : token;
       config.headers = {
         ...config.headers,
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${parsedToken}`,
       };
     }
   }
@@ -289,12 +316,10 @@ api.addResponseInterceptor((response) => {
 
 api.addErrorInterceptor((error) => {
   // 可以在这里统一处理错误
-  console.error('API Error:', error);
+  console.error("API Error:", error);
   return error;
 });
 
 // 导出实例和类
-export { api, ApiClient };
+export { api };
 export type { ApiResponse, RequestConfig };
-
-
