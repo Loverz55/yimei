@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAtom, useSetAtom } from "jotai";
 import {
   selectedProviderIdAtom,
@@ -15,16 +15,30 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ProviderSelector } from "./ProviderSelector";
+import {
+  MEDICAL_AESTHETICS_CATEGORIES,
+  MedicalAestheticsTerm,
+} from "@/type/medicalAesthetics";
+import { medicalAestheticsListApi } from "@/api/medicalAesthetics";
 
 export function GenerateForm() {
   const [selectedProviderId] = useAtom(selectedProviderIdAtom);
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom);
   const setCurrentImage = useSetAtom(currentGeneratedImageAtom);
   const setError = useSetAtom(generationErrorAtom);
+  const [terms, setTerms] = useState<MedicalAestheticsTerm[]>([]);
+  const [loadingTerms, setLoadingTerms] = useState(false);
 
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const [promptInjectIds, setPromptInjectIds] = useState<number[]>([]);
+  const [promptInjectPosition, setPromptInjectPosition] = useState<
+    "prepend" | "append"
+  >("prepend");
+  const [injectCategory, setInjectCategory] = useState<string>("all");
+  const [injectSearch, setInjectSearch] = useState("");
 
   // 高级选项
   const [aspectRatio, setAspectRatio] = useState<
@@ -32,6 +46,58 @@ export function GenerateForm() {
   >("1:1");
   const [steps, setSteps] = useState(30);
   const [cfgScale, setCfgScale] = useState(7);
+
+  const filteredTerms = useMemo(() => {
+    const search = injectSearch.trim().toLowerCase();
+    return (terms || [])
+      .filter((t) =>
+        injectCategory === "all" ? true : t.category === injectCategory,
+      )
+      .filter((t) => {
+        if (!search) return true;
+        const hay = `${t.label ?? ""} ${t.prompt ?? ""} ${t.description ?? ""}`
+          .toLowerCase()
+          .trim();
+        return hay.includes(search);
+      })
+      .sort((a, b) => {
+        if (a.category !== b.category)
+          return a.category.localeCompare(b.category);
+        return (a.label || "").localeCompare(b.label || "");
+      });
+  }, [terms, injectCategory, injectSearch]);
+
+  useEffect(() => {
+    const loadTerms = async () => {
+      try {
+        setLoadingTerms(true);
+        const res = await medicalAestheticsListApi();
+        if (res.code !== 0) {
+          toast.error(res.msg || "加载提示词库失败");
+          setTerms([]);
+          return;
+        }
+        setTerms((res.data as any) || []);
+      } catch (e: any) {
+        toast.error("加载提示词库失败", {
+          description: e?.message,
+        });
+      } finally {
+        setLoadingTerms(false);
+      }
+    };
+
+    loadTerms();
+  }, []);
+
+  const toggleInjectId = (id: number, checked: boolean) => {
+    setPromptInjectIds((prev) => {
+      const set = new Set(prev);
+      if (checked) set.add(id);
+      else set.delete(id);
+      return Array.from(set);
+    });
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -51,6 +117,12 @@ export function GenerateForm() {
         aspectRatio,
         steps,
         cfgScale,
+        ...(promptInjectIds.length > 0
+          ? {
+              promptInjectIds,
+              promptInjectPosition,
+            }
+          : {}),
       };
 
       const res = await generateImgApi(requestData);
@@ -94,6 +166,139 @@ export function GenerateForm() {
         <p className="text-xs text-muted-foreground">
           详细描述能得到更好的效果
         </p>
+      </div>
+
+      {/* 提示词库注入 */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <Label>提示词库（可选）</Label>
+          <div className="text-xs text-muted-foreground">
+            已选择 {promptInjectIds.length} 条
+          </div>
+        </div>
+
+        <div className="grid gap-3 rounded-lg border p-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="injectCategory">类别</Label>
+              <select
+                id="injectCategory"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={injectCategory}
+                onChange={(e) => setInjectCategory(e.target.value)}
+                disabled={isGenerating}
+              >
+                <option value="all">全部</option>
+                {MEDICAL_AESTHETICS_CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="injectPosition">注入位置</Label>
+              <select
+                id="injectPosition"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={promptInjectPosition}
+                onChange={(e) => setPromptInjectPosition(e.target.value as any)}
+                disabled={isGenerating}
+              >
+                <option value="prepend">前置（推荐）</option>
+                <option value="append">后置</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="injectSearch">搜索</Label>
+              <Input
+                id="injectSearch"
+                value={injectSearch}
+                onChange={(e) => setInjectSearch(e.target.value)}
+                placeholder="搜索 label / prompt / description"
+                disabled={isGenerating}
+              />
+            </div>
+
+            <div className="flex items-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setPromptInjectIds([])}
+                disabled={isGenerating || promptInjectIds.length === 0}
+              >
+                清空已选
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  const ids = filteredTerms.map((t) => t.id);
+                  setPromptInjectIds(
+                    Array.from(new Set([...promptInjectIds, ...ids])),
+                  );
+                }}
+                disabled={isGenerating || filteredTerms.length === 0}
+              >
+                全选当前筛选
+              </Button>
+            </div>
+          </div>
+
+          <div className="max-h-56 overflow-auto rounded-md border bg-background">
+            {loadingTerms ? (
+              <div className="p-3 text-sm text-muted-foreground">加载中...</div>
+            ) : filteredTerms.length === 0 ? (
+              <div className="p-3 text-sm text-muted-foreground">
+                暂无可用提示词，可在“提示词库”管理页添加
+              </div>
+            ) : (
+              <div className="divide-y">
+                {filteredTerms.map((t) => {
+                  const checked = promptInjectIds.includes(t.id);
+                  return (
+                    <label
+                      key={t.id}
+                      className="flex cursor-pointer items-start gap-3 p-3 hover:bg-muted/40"
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4"
+                        checked={checked}
+                        onChange={(e) => toggleInjectId(t.id, e.target.checked)}
+                        disabled={isGenerating}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="truncate text-sm font-medium">
+                            {t.label}
+                          </div>
+                          <div className="shrink-0 text-xs text-muted-foreground">
+                            #{t.id}
+                          </div>
+                        </div>
+                        <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                          {t.prompt}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            勾选后后端会把所选 prompt 注入到 Prompt 前/后，并在生成记录的 metadata
+            中保存注入后的 finalPrompt 便于追溯。
+          </p>
+        </div>
       </div>
 
       {/* 负面提示词 */}

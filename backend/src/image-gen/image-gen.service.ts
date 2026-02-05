@@ -45,6 +45,49 @@ export class ImageGenService implements OnModuleInit {
     private readonly uploadService: UploadService,
   ) {}
 
+  private async resolveInjectedPrompts(ids?: number[]): Promise<string[]> {
+    if (!ids || ids.length === 0) return [];
+
+    const uniqueIds = Array.from(new Set(ids));
+    const rows = await this.prisma.medicalAesthetics.findMany({
+      where: { id: { in: uniqueIds } },
+      select: { id: true, prompt: true },
+    });
+
+    const byId = new Map(rows.map((r) => [r.id, r.prompt]));
+    const missing = uniqueIds.filter((id) => !byId.has(id));
+    if (missing.length > 0) {
+      throw new BadRequestException(
+        `promptInjectIds 包含不存在的ID: ${missing.join(', ')}`,
+      );
+    }
+
+    return ids
+      .map((id) => byId.get(id) ?? '')
+      .map((p) => p.trim())
+      .filter(Boolean);
+  }
+
+  private buildInjectedPrompt(params: {
+    basePrompt: string;
+    injectedPrompts: string[];
+    position?: 'prepend' | 'append';
+  }): string {
+    const basePrompt = (params.basePrompt ?? '').trim();
+    const injectedText = (params.injectedPrompts ?? [])
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .join(', ');
+
+    if (!injectedText) return basePrompt;
+    if (!basePrompt) return injectedText;
+
+    const position = params.position ?? 'prepend';
+    return position === 'append'
+      ? `${basePrompt}, ${injectedText}`
+      : `${injectedText}, ${basePrompt}`;
+  }
+
   async onModuleInit() {
     // 启动时加载所有启用的 Provider 配置
     await this.loadProviders();
@@ -168,9 +211,16 @@ export class ImageGenService implements OnModuleInit {
       provider = await this.selectProvider();
     }
 
+    const injectedPrompts = await this.resolveInjectedPrompts(dto.promptInjectIds);
+    const finalPrompt = this.buildInjectedPrompt({
+      basePrompt: dto.prompt,
+      injectedPrompts,
+      position: dto.promptInjectPosition,
+    });
+
     // 调用 Provider 生成图片
     const result: ImageGenerationResult = await provider.generateImage(
-      dto.prompt,
+      finalPrompt,
       {
         width: dto.width,
         height: dto.height,
@@ -233,6 +283,16 @@ export class ImageGenService implements OnModuleInit {
         metadata: {
           ...result.metadata,
           configId: result.configId,
+          ...(injectedPrompts.length > 0
+            ? {
+                promptInjection: {
+                  ids: dto.promptInjectIds,
+                  position: dto.promptInjectPosition,
+                  injectedPrompts,
+                  finalPrompt,
+                },
+              }
+            : {}),
         } as any,
         cost: result.cost,
         status: 'completed',
@@ -270,8 +330,8 @@ export class ImageGenService implements OnModuleInit {
       throw new NotFoundException('图片文件或遮罩文件不存在');
     }
 
-    const imageUrlResult = await this.uploadService.getFileUrl(dto.imageId);
-    const maskUrlResult = await this.uploadService.getFileUrl(dto.maskId);
+    const imageUrlResult = await this.uploadService.getFileUrl(dto.imageId, userId);
+    const maskUrlResult = await this.uploadService.getFileUrl(dto.maskId, userId);
 
     if (!imageUrlResult || !maskUrlResult) {
       throw new BadRequestException('获取文件访问地址失败');
@@ -290,8 +350,15 @@ export class ImageGenService implements OnModuleInit {
       provider = await this.selectProvider();
     }
 
+    const injectedPrompts = await this.resolveInjectedPrompts(dto.promptInjectIds);
+    const finalPrompt = this.buildInjectedPrompt({
+      basePrompt: dto.prompt,
+      injectedPrompts,
+      position: dto.promptInjectPosition,
+    });
+
     // 调用 Provider 进行 Inpainting
-    const result = await provider.inpaint(imageUrl, maskUrl, dto.prompt, {
+    const result = await provider.inpaint(imageUrl, maskUrl, finalPrompt, {
       negativePrompt: dto.negativePrompt,
       steps: dto.steps,
       cfgScale: dto.cfgScale,
@@ -345,6 +412,16 @@ export class ImageGenService implements OnModuleInit {
         metadata: {
           ...result.metadata,
           configId: result.configId,
+          ...(injectedPrompts.length > 0
+            ? {
+                promptInjection: {
+                  ids: dto.promptInjectIds,
+                  position: dto.promptInjectPosition,
+                  injectedPrompts,
+                  finalPrompt,
+                },
+              }
+            : {}),
         } as any,
         cost: result.cost,
         status: 'completed',

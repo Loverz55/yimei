@@ -47,6 +47,8 @@
 ```json
 {
   "prompt": "一张医美诊所的宣传海报，现代简约风格，粉色和白色配色",
+  "promptInjectIds": [1, 3], // 可选：从“提示词库”(medical-aesthetics)选择要注入的提示词ID列表
+  "promptInjectPosition": "prepend", // 可选：prepend(前置) | append(后置)
   "negativePrompt": "模糊，低质量，变形",
   "provider": "auto",  // 可选：auto, stability, openai, aliyun
   "width": 1024,

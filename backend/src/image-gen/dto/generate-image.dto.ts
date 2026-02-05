@@ -7,6 +7,15 @@ const GenerateImageSchema = z.object({
     .string()
     .min(1, '提示词不能为空')
     .max(2000, '提示词不能超过2000字符'),
+  promptInjectIds: z
+    .array(z.number().int().positive())
+    .max(20)
+    .optional()
+    .describe('从“提示词库”(medical_aesthetics)选择要注入的提示词ID列表'),
+  promptInjectPosition: z
+    .enum(['prepend', 'append'])
+    .default('prepend')
+    .describe('注入提示词的位置：prepend=前置，append=后置'),
   negativePrompt: z.string().max(2000).optional(),
   configId: z
     .number()
@@ -15,7 +24,7 @@ const GenerateImageSchema = z.object({
     .optional()
     .describe('指定使用的Provider配置ID，优先级最高'),
   provider: z
-    .enum(['stability', 'openai', 'aliyun', 'auto'])
+    .enum(['stability', 'openai', 'aliyun', 'gemini', 'auto'])
     .default('auto')
     .describe('AI服务提供商类型，auto为自动选择'),
   width: z.number().int().min(256).max(2048).optional(),
@@ -48,6 +57,15 @@ const InpaintImageSchema = z.object({
   imageId: z.number().int().positive().describe('原始图片文件ID'),
   maskId: z.number().int().positive().describe('遮罩图片文件ID'),
   prompt: z.string().min(1).max(2000).describe('修改描述'),
+  promptInjectIds: z
+    .array(z.number().int().positive())
+    .max(20)
+    .optional()
+    .describe('从“提示词库”(medical_aesthetics)选择要注入的提示词ID列表'),
+  promptInjectPosition: z
+    .enum(['prepend', 'append'])
+    .default('prepend')
+    .describe('注入提示词的位置：prepend=前置，append=后置'),
   negativePrompt: z.string().max(2000).optional(),
   configId: z
     .number()
@@ -55,7 +73,7 @@ const InpaintImageSchema = z.object({
     .positive()
     .optional()
     .describe('指定使用的Provider配置ID'),
-  provider: z.enum(['stability', 'openai', 'auto']).default('auto'),
+  provider: z.enum(['stability', 'openai', 'gemini', 'auto']).default('auto'),
   strength: z.number().min(0).max(1).optional().describe('修改强度，0-1之间'),
   steps: z.number().int().min(10).max(150).optional(),
   cfgScale: z.number().min(1).max(20).optional(),

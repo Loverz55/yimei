@@ -5,12 +5,14 @@
 // 请求类型
 export interface GenerateImageRequest {
   prompt: string;
+  promptInjectIds?: number[];
+  promptInjectPosition?: "prepend" | "append";
   negativePrompt?: string;
   configId?: number;
-  provider?: 'stability' | 'openai' | 'aliyun' | 'auto';
+  provider?: "stability" | "openai" | "aliyun" | "auto";
   width?: number;
   height?: number;
-  aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
+  aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
   style?: string;
   steps?: number;
   cfgScale?: number;
@@ -23,9 +25,11 @@ export interface InpaintImageRequest {
   imageId: number;
   maskId: number;
   prompt: string;
+  promptInjectIds?: number[];
+  promptInjectPosition?: "prepend" | "append";
   negativePrompt?: string;
   configId?: number;
-  provider?: 'stability' | 'openai' | 'auto';
+  provider?: "stability" | "openai" | "Gemini" | "auto";
   strength?: number;
   steps?: number;
   cfgScale?: number;
@@ -84,7 +88,7 @@ export interface AiModelConfigFull {
 
 export interface CreateProviderConfigRequest {
   name: string;
-  provider: 'stability' | 'openai' | 'aliyun';
+  provider: "stability" | "openai" | "aliyun";
   type: string;
   modelId?: string;
   baseUrl: string;

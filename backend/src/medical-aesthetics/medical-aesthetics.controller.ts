@@ -16,11 +16,14 @@ import {
 import { success } from 'src/common/result';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Role, Roles } from 'src/auth/decorators';
 
 @Controller('medical-aesthetics')
 @ApiBearerAuth()
 @ApiTags('前端提示词库')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 export class MedicalAestheticsController {
   constructor(
     private readonly medicalAestheticsService: MedicalAestheticsService,

@@ -20,10 +20,12 @@ import { Result, success } from '../common/result';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { UserInfo } from 'src/auth/decorators/current-user.decorator';
 import { TokenDto } from 'src/auth/dto/auth.dto';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Role, Roles } from 'src/auth/decorators';
 
 @ApiTags('图像生成')
 @Controller('image-gen')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ImageGenController {
   constructor(private readonly imageGenService: ImageGenService) {}
@@ -74,6 +76,7 @@ export class ImageGenController {
   }
 
   @Get('providers/list')
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: '获取所有可用的AI Provider配置列表' })
   async getAvailableProviders(): Promise<Result<any>> {
     const providers = await this.imageGenService.getAvailableProviders();
@@ -81,6 +84,7 @@ export class ImageGenController {
   }
 
   @Post('providers/reload')
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: '重新加载Provider配置（管理员）' })
   async reloadProviders(): Promise<Result<any>> {
     const result = await this.imageGenService.reloadProviders();
