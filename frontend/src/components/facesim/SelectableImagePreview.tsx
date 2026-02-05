@@ -8,12 +8,15 @@ import {
   selectedAreaAtom,
   isProcessingAtom,
   type SelectionArea,
+  type RectangleSelection,
+  type FreehandSelection,
 } from '@/store/facesim';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 type ViewMode = 'single' | 'sideBySide' | 'slider';
+type DrawMode = 'rectangle' | 'freehand';
 
 export function SelectableImagePreview() {
   const originalImage = useAtomValue(originalImageAtom);
@@ -22,9 +25,18 @@ export function SelectableImagePreview() {
   const isProcessing = useAtomValue(isProcessingAtom);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // 绘制模式
+  const [drawMode, setDrawMode] = useState<DrawMode>('freehand');
   const [isDrawing, setIsDrawing] = useState(false);
+
+  // 矩形选择
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [currentPoint, setCurrentPoint] = useState<{ x: number; y: number } | null>(null);
+
+  // 自由绘制
+  const [freehandPoints, setFreehandPoints] = useState<Array<{ x: number; y: number }>>([]);
 
   // 对比模式
   const [viewMode, setViewMode] = useState<ViewMode>('single');
@@ -60,12 +72,18 @@ export function SelectableImagePreview() {
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     setIsDrawing(true);
-    setStartPoint({ x, y });
-    setCurrentPoint({ x, y });
+
+    if (drawMode === 'rectangle') {
+      setStartPoint({ x, y });
+      setCurrentPoint({ x, y });
+    } else {
+      // 自由绘制模式：开始新路径
+      setFreehandPoints([{ x, y }]);
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDrawing || !startPoint) return;
+    if (!isDrawing) return;
 
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -73,26 +91,70 @@ export function SelectableImagePreview() {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    setCurrentPoint({ x, y });
+    if (drawMode === 'rectangle') {
+      if (!startPoint) return;
+      setCurrentPoint({ x, y });
+    } else {
+      // 自由绘制模式：添加点到路径
+      setFreehandPoints((prev) => [...prev, { x, y }]);
+    }
   };
 
   const handleMouseUp = () => {
-    if (!isDrawing || !startPoint || !currentPoint) return;
+    if (!isDrawing) return;
 
-    const x = Math.min(startPoint.x, currentPoint.x);
-    const y = Math.min(startPoint.y, currentPoint.y);
-    const width = Math.abs(currentPoint.x - startPoint.x);
-    const height = Math.abs(currentPoint.y - startPoint.y);
+    if (drawMode === 'rectangle') {
+      if (!startPoint || !currentPoint) return;
 
-    // 只有在框选区域足够大时才保存
-    if (width > 2 && height > 2) {
-      setSelectedArea({ x, y, width, height });
-      toast.success('区域已选中');
+      const x = Math.min(startPoint.x, currentPoint.x);
+      const y = Math.min(startPoint.y, currentPoint.y);
+      const width = Math.abs(currentPoint.x - startPoint.x);
+      const height = Math.abs(currentPoint.y - startPoint.y);
+
+      // 只有在框选区域足够大时才保存
+      if (width > 2 && height > 2) {
+        setSelectedArea({
+          type: 'rectangle',
+          x,
+          y,
+          width,
+          height,
+        });
+        toast.success('区域已选中');
+      }
+
+      setStartPoint(null);
+      setCurrentPoint(null);
+    } else {
+      // 自由绘制模式：完成路径
+      if (freehandPoints.length < 3) {
+        toast.error('路径太短，请绘制更大的区域');
+        setFreehandPoints([]);
+      } else {
+        // 计算边界框
+        const xs = freehandPoints.map((p) => p.x);
+        const ys = freehandPoints.map((p) => p.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        setSelectedArea({
+          type: 'freehand',
+          points: freehandPoints,
+          boundingBox: {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          },
+        });
+        toast.success('区域已选中');
+        setFreehandPoints([]);
+      }
     }
 
     setIsDrawing(false);
-    setStartPoint(null);
-    setCurrentPoint(null);
   };
 
   // 滑块拖动
@@ -142,20 +204,32 @@ export function SelectableImagePreview() {
     }
   };
 
-  // 计算当前绘制的矩形
-  const getCurrentRect = (): SelectionArea | null => {
-    if (!isDrawing || !startPoint || !currentPoint) return null;
+  // 计算当前绘制的矩形或路径
+  const getCurrentDrawing = (): { type: 'rectangle'; rect: RectangleSelection } | { type: 'freehand'; points: Array<{ x: number; y: number }> } | null => {
+    if (!isDrawing) return null;
 
-    const x = Math.min(startPoint.x, currentPoint.x);
-    const y = Math.min(startPoint.y, currentPoint.y);
-    const width = Math.abs(currentPoint.x - startPoint.x);
-    const height = Math.abs(currentPoint.y - startPoint.y);
+    if (drawMode === 'rectangle') {
+      if (!startPoint || !currentPoint) return null;
 
-    return { x, y, width, height };
+      const x = Math.min(startPoint.x, currentPoint.x);
+      const y = Math.min(startPoint.y, currentPoint.y);
+      const width = Math.abs(currentPoint.x - startPoint.x);
+      const height = Math.abs(currentPoint.y - startPoint.y);
+
+      return {
+        type: 'rectangle',
+        rect: { type: 'rectangle', x, y, width, height },
+      };
+    } else {
+      if (freehandPoints.length === 0) return null;
+      return {
+        type: 'freehand',
+        points: freehandPoints,
+      };
+    }
   };
 
-  const drawingRect = getCurrentRect();
-  const displayRect = drawingRect || selectedArea;
+  const currentDrawing = getCurrentDrawing();
 
   if (!displayImage) {
     return (
@@ -309,23 +383,75 @@ export function SelectableImagePreview() {
               draggable={false}
             />
 
-            {/* 绘制选区矩形 */}
-            {displayRect && !editedImage && (
-              <div
-                className="absolute border-2 border-primary bg-primary/10"
-                style={{
-                  left: `${displayRect.x}%`,
-                  top: `${displayRect.y}%`,
-                  width: `${displayRect.width}%`,
-                  height: `${displayRect.height}%`,
-                }}
-              >
-                {/* 四个角的手柄 */}
-                <div className="absolute -top-1 -left-1 w-2 h-2 bg-primary rounded-full"></div>
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></div>
-                <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-primary rounded-full"></div>
-                <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-primary rounded-full"></div>
-              </div>
+            {/* 绘制选区 */}
+            {viewMode === 'single' && !isProcessing && (
+              <>
+                {/* 正在绘制中 */}
+                {currentDrawing && currentDrawing.type === 'rectangle' && !editedImage && (
+                  <div
+                    className="absolute border-2 border-primary bg-primary/10"
+                    style={{
+                      left: `${currentDrawing.rect.x}%`,
+                      top: `${currentDrawing.rect.y}%`,
+                      width: `${currentDrawing.rect.width}%`,
+                      height: `${currentDrawing.rect.height}%`,
+                    }}
+                  />
+                )}
+
+                {currentDrawing && currentDrawing.type === 'freehand' && !editedImage && (
+                  <svg
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d={`M ${currentDrawing.points.map((p) => `${p.x} ${p.y}`).join(' L ')}`}
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+
+                {/* 已保存的选区 */}
+                {selectedArea && selectedArea.type === 'rectangle' && (
+                  <div
+                    className="absolute border-2 border-primary bg-primary/10"
+                    style={{
+                      left: `${selectedArea.x}%`,
+                      top: `${selectedArea.y}%`,
+                      width: `${selectedArea.width}%`,
+                      height: `${selectedArea.height}%`,
+                    }}
+                  >
+                    {/* 四个角的手柄 */}
+                    <div className="absolute -top-1 -left-1 w-2 h-2 bg-primary rounded-full"></div>
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></div>
+                    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-primary rounded-full"></div>
+                    <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-primary rounded-full"></div>
+                  </div>
+                )}
+
+                {selectedArea && selectedArea.type === 'freehand' && (
+                  <svg
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d={`M ${selectedArea.points.map((p) => `${p.x} ${p.y}`).join(' L ')} Z`}
+                      fill="hsl(var(--primary) / 0.1)"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="0.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </>
             )}
 
             {isProcessing && (
@@ -342,10 +468,41 @@ export function SelectableImagePreview() {
 
       {/* 操作按钮 */}
       <div className="space-y-3">
+        {/* 绘制模式切换 */}
+        {displayImage && !editedImage && (
+          <div className="flex gap-2 justify-center">
+            <Button
+              variant={drawMode === 'rectangle' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDrawMode('rectangle')}
+              disabled={isProcessing}
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+              </svg>
+              矩形框选
+            </Button>
+            <Button
+              variant={drawMode === 'freehand' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDrawMode('freehand')}
+              disabled={isProcessing}
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              自由绘制
+            </Button>
+          </div>
+        )}
+
         {selectedArea && !editedImage && (
           <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
             <span>
-              选区: {selectedArea.width.toFixed(1)}% × {selectedArea.height.toFixed(1)}%
+              {selectedArea.type === 'rectangle'
+                ? `选区: ${selectedArea.width.toFixed(1)}% × ${selectedArea.height.toFixed(1)}%`
+                : `选区: 自由绘制 (${selectedArea.points.length} 个点)`
+              }
             </span>
             <Button
               variant="ghost"
@@ -392,7 +549,10 @@ export function SelectableImagePreview() {
 
         {!selectedArea && displayImage && !editedImage && (
           <p className="text-xs text-center text-muted-foreground">
-            在图片上拖动鼠标框选需要编辑的区域
+            {drawMode === 'rectangle'
+              ? '在图片上拖动鼠标框选需要编辑的区域'
+              : '在图片上按住鼠标左键绘制需要编辑的区域'
+            }
           </p>
         )}
       </div>
