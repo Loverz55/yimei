@@ -2,6 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { AppConfigService } from '../config/config.service';
 import {
@@ -55,13 +57,23 @@ export class UploadService {
   }
 
   // 确认上传成功
-  async confirmUpload(fileId: number, size?: number) {
+  async confirmUpload(fileId: number, userId: number, size?: number) {
     const file = await this.prisma.file.findUnique({
       where: { id: fileId },
     });
 
     if (!file) {
       throw new NotFoundException('文件记录不存在');
+    }
+
+    // 验证文件所有权
+    if (file.userId && file.userId !== userId) {
+      throw new ForbiddenException('无权操作此文件');
+    }
+
+    // 验证文件状态
+    if (file.status !== 'pending') {
+      throw new BadRequestException('文件已确认或已删除');
     }
 
     const updatedFile = await this.prisma.file.update({
@@ -80,7 +92,7 @@ export class UploadService {
   }
 
   // 获取文件访问URL（生成GET预签名URL）
-  async getFileUrl(fileId: number, expiresIn: number = 60 * 60) {
+  async getFileUrl(fileId: number, userId: number, expiresIn: number = 60 * 60) {
     const file = await this.prisma.file.findUnique({
       where: { id: fileId },
     });
@@ -93,6 +105,15 @@ export class UploadService {
       throw new UnauthorizedException('文件未上传或已删除');
     }
 
+    // 验证文件所有权（如果文件有所有者）
+    if (file.userId && file.userId !== userId) {
+      throw new ForbiddenException('无权访问此文件');
+    }
+
+    // 限制过期时间最长为7天
+    const maxExpiresIn = 7 * 24 * 60 * 60; // 7天
+    const validExpiresIn = Math.min(Math.max(expiresIn, 60), maxExpiresIn);
+
     const bucket = this.appConfig.s3Config.bucket;
 
     const cmd = new GetObjectCommand({
@@ -100,7 +121,7 @@ export class UploadService {
       Key: file.key,
     });
 
-    const url = await getSignedUrl(this.s3, cmd, { expiresIn });
+    const url = await getSignedUrl(this.s3, cmd, { expiresIn: validExpiresIn });
 
     return {
       fileId: file.id,
@@ -112,7 +133,12 @@ export class UploadService {
   }
 
   // 根据key获取文件访问URL
-  async getFileUrlByKey(key: string, expiresIn: number = 60 * 60) {
+  async getFileUrlByKey(key: string, userId: number, expiresIn: number = 60 * 60) {
+    // 验证key格式，防止路径遍历攻击
+    if (!key || key.includes('..') || !key.match(/^(uploads|generated)\//)) {
+      throw new BadRequestException('无效的文件路径');
+    }
+
     const file = await this.prisma.file.findUnique({
       where: { key },
     });
@@ -125,6 +151,15 @@ export class UploadService {
       throw new UnauthorizedException('文件未上传或已删除');
     }
 
+    // 验证文件所有权（如果文件有所有者）
+    if (file.userId && file.userId !== userId) {
+      throw new ForbiddenException('无权访问此文件');
+    }
+
+    // 限制过期时间最长为7天
+    const maxExpiresIn = 7 * 24 * 60 * 60; // 7天
+    const validExpiresIn = Math.min(Math.max(expiresIn, 60), maxExpiresIn);
+
     const bucket = this.appConfig.s3Config.bucket;
 
     const cmd = new GetObjectCommand({
@@ -132,7 +167,7 @@ export class UploadService {
       Key: file.key,
     });
 
-    const url = await getSignedUrl(this.s3, cmd, { expiresIn });
+    const url = await getSignedUrl(this.s3, cmd, { expiresIn: validExpiresIn });
 
     return {
       fileId: file.id,
@@ -144,13 +179,18 @@ export class UploadService {
   }
 
   // 获取文件信息
-  async getFileById(fileId: number) {
+  async getFileById(fileId: number, userId: number) {
     const file = await this.prisma.file.findUnique({
       where: { id: fileId },
     });
 
     if (!file) {
       throw new NotFoundException('文件记录不存在');
+    }
+
+    // 验证文件所有权（如果文件有所有者）
+    if (file.userId && file.userId !== userId) {
+      throw new ForbiddenException('无权访问此文件');
     }
 
     return file;
