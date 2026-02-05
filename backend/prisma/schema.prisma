@@ -101,3 +101,11 @@ model ImageGeneration {
   @@index([provider])
   @@index([status])
 }
+
+model MedicalAesthetics {
+  id          Int     @id @default(autoincrement())
+  category    String //skin,face,eyes,nose,lips,other
+  label       String
+  prompt      String
+  description String?
+}
