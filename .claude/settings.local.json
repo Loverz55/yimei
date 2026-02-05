@@ -10,7 +10,9 @@
       "Bash(npx tsc --showConfig)",
       "Bash(npx prisma format)",
       "Bash(pnpm run:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
     ]
   }
 }
