@@ -10,9 +10,12 @@ export interface User {
   role: number;
 }
 
-// 登录返回的 data
+// 登录返回的 data（后端直接返回用户信息 + token）
 export interface LoginData {
-  user: User;
+  id: number;
+  loginId: string;
+  nickname: string;
+  role: number;
   token: string;
 }
 

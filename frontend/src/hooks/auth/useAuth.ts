@@ -24,7 +24,13 @@ export function useAuth() {
     if (res.code == 0 && res.data) {
       // 使用 tokenAtom 来管理 token，会自动同步到 localStorage
       setToken(res.data.token);
-      setUserInfo(res.data.user);
+      // 映射后端返回的字段（id -> userId）
+      setUserInfo({
+        userId: res.data.id,
+        loginId: res.data.loginId,
+        nickname: res.data.nickname,
+        role: res.data.role,
+      });
       toast.success("登录成功");
       router.push("/");
     } else {
@@ -41,3 +47,6 @@ export function useAuth() {
     error,
   };
 }
+
+//  上传图 》 得到oos图片url 》  提示词 + 图片 》 返回url 》 nestjs 上传oss 》 返回url
+//  上传图 》 得到oos图片url 》  提示词 + 图片 》 返回url 》 nestjs 上传oss 》 返回url

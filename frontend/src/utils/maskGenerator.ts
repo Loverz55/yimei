@@ -32,15 +32,46 @@ export async function generateMask(
       ctx.fillStyle = 'black';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 计算选区的实际像素坐标
-      const x = (selection.x / 100) * canvas.width;
-      const y = (selection.y / 100) * canvas.height;
-      const width = (selection.width / 100) * canvas.width;
-      const height = (selection.height / 100) * canvas.height;
-
-      // 绘制白色矩形（修改区域）
+      // 设置白色填充（修改区域）
       ctx.fillStyle = 'white';
-      ctx.fillRect(x, y, width, height);
+
+      if (selection.type === 'rectangle') {
+        // 矩形选区
+        const x = (selection.x / 100) * canvas.width;
+        const y = (selection.y / 100) * canvas.height;
+        const width = (selection.width / 100) * canvas.width;
+        const height = (selection.height / 100) * canvas.height;
+
+        ctx.fillRect(x, y, width, height);
+      } else {
+        // 自由绘制选区
+        if (selection.points.length < 3) {
+          reject(new Error('选区路径点数不足'));
+          return;
+        }
+
+        ctx.beginPath();
+
+        // 转换第一个点为实际像素坐标
+        const firstPoint = selection.points[0];
+        ctx.moveTo(
+          (firstPoint.x / 100) * canvas.width,
+          (firstPoint.y / 100) * canvas.height
+        );
+
+        // 绘制路径
+        for (let i = 1; i < selection.points.length; i++) {
+          const point = selection.points[i];
+          ctx.lineTo(
+            (point.x / 100) * canvas.width,
+            (point.y / 100) * canvas.height
+          );
+        }
+
+        // 闭合路径
+        ctx.closePath();
+        ctx.fill();
+      }
 
       // 转换为 Blob
       canvas.toBlob(

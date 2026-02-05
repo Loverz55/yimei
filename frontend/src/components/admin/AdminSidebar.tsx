@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Wrench, Users, BarChart3, Boxes, ArrowLeft } from "lucide-react";
+import { Wrench, Users, BarChart3, Boxes, ArrowLeft, Sparkles } from "lucide-react";
 
 const navItems = [
   {
@@ -25,6 +25,11 @@ const navItems = [
     title: "模型管理",
     href: "/admin/models",
     icon: Boxes,
+  },
+  {
+    title: "医美术语配置",
+    href: "/admin/medical-aesthetics",
+    icon: Sparkles,
   },
 ];
 
