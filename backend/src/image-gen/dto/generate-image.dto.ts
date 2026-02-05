@@ -69,7 +69,7 @@ export class InpaintImageDto extends createZodDto(InpaintImageSchema) {}
 // 导出响应类型
 export const GenerateImageResponseSchema = z.object({
   id: z.number(),
-  imageUrl: z.string().url(),
+  imageUrl: z.url(),
   provider: z.string(),
   configId: z.number(),
   model: z.string().optional(),

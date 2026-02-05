@@ -91,14 +91,14 @@ export class GeminiProvider extends BaseImageProvider {
       };
 
       // 打印请求信息用于调试
-      this.logger.debug(
-        'Gemini API Request URL:',
-        `${this.config.baseUrl}/v1beta/models/${model}:generateContent`,
-      );
-      this.logger.debug(
-        'Gemini API Request Body:',
-        JSON.stringify(requestBody, null, 2),
-      );
+      // this.logger.debug(
+      //   'Gemini API Request URL:',
+      //   `${this.config.baseUrl}/v1beta/models/${model}:generateContent`,
+      // );
+      // this.logger.debug(
+      //   'Gemini API Request Body:',
+      //   JSON.stringify(requestBody, null, 2),
+      // );
 
       const response = await firstValueFrom(
         this.httpService.post(
@@ -112,24 +112,6 @@ export class GeminiProvider extends BaseImageProvider {
           },
         ),
       );
-
-      // 打印完整响应用于调试
-      // this.logger.debug(
-      //   'Gemini API Response:',
-      //   JSON.stringify(response.data, null, 2),
-      // );
-
-      // Gemini generateContent 返回格式:
-      // {
-      //   candidates: [{
-      //     content: {
-      //       parts: [
-      //         { text: "..." },
-      //         { inlineData: { mimeType: "image/png", data: "base64..." } }
-      //       ]
-      //     }
-      //   }]
-      // }
       const candidates = response.data.candidates;
       if (!candidates || candidates.length === 0) {
         this.logger.error(
@@ -254,10 +236,10 @@ export class GeminiProvider extends BaseImageProvider {
       );
 
       // 打印完整响应用于调试
-      this.logger.debug(
-        'Gemini Inpaint Response:',
-        JSON.stringify(response.data, null, 2),
-      );
+      // this.logger.debug(
+      //   'Gemini Inpaint Response:',
+      //   JSON.stringify(response.data, null, 2),
+      // );
 
       // 解析 Gemini 响应
       if (

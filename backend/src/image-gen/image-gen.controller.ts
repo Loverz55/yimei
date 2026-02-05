@@ -18,7 +18,6 @@ import {
 } from './dto/generate-image.dto';
 import { Result, success } from '../common/result';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
-import { userInfo } from 'os';
 import { UserInfo } from 'src/auth/decorators/current-user.decorator';
 import { TokenDto } from 'src/auth/dto/auth.dto';
 
