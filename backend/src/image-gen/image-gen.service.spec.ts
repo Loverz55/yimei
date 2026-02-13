@@ -424,4 +424,404 @@ describe('ImageGenService', () => {
       expect(aiProviderService.reloadProviders).toHaveBeenCalled();
     });
   });
+
+  describe('Concurrency Simulation', () => {
+    const makeGenerateDto = (index: number): GenerateImageDto => ({
+      prompt: `landscape ${index}`,
+      width: 1024,
+      height: 1024,
+      promptInjectPosition: 'prepend',
+      provider: 'auto',
+      samples: 1,
+    });
+
+    /**
+     * 模拟多个用户同时提交任务到队列
+     */
+    it('should handle multiple concurrent queue submissions', async () => {
+      let jobCounter = 0;
+      vi.spyOn(imageQueue, 'add').mockImplementation(async () => {
+        jobCounter++;
+        return { id: `job-${jobCounter}`, timestamp: Date.now() } as any;
+      });
+
+      // 10 个用户同时提交任务
+      const submissions = Array.from({ length: 10 }, (_, i) =>
+        service.generateImage(makeGenerateDto(i), i + 1),
+      );
+
+      const results = await Promise.all(submissions);
+
+      // 所有任务都应该成功提交
+      expect(results).toHaveLength(10);
+      results.forEach((result, i) => {
+        expect(result.jobId).toBe(`job-${i + 1}`);
+        expect(result.message).toContain('图片生成任务已提交');
+      });
+
+      // 队列 add 应被调用 10 次
+      expect(imageQueue.add).toHaveBeenCalledTimes(10);
+    });
+
+    /**
+     * 模拟处理器并发执行 generateImageInternal
+     * 展示当 concurrency=5 时，5 个任务同时跑的情况
+     */
+    it('should process multiple generateImageInternal calls concurrently', async () => {
+      const executionLog: { userId: number; event: string; time: number }[] = [];
+      const startTime = Date.now();
+
+      // 模拟 provider.generateImage 需要一定时间完成
+      mockProvider.generateImage.mockImplementation(async (prompt: string) => {
+        const userId = parseInt(prompt.split(' ')[1]);
+        executionLog.push({ userId, event: 'gen-start', time: Date.now() - startTime });
+        // 模拟耗时操作
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        executionLog.push({ userId, event: 'gen-end', time: Date.now() - startTime });
+        return {
+          success: true,
+          imageBase64: 'base64-data',
+          provider: 'test-provider',
+          model: 'test-model',
+          cost: 0.1,
+          metadata: {},
+        };
+      });
+
+      vi.spyOn(uploadService, 'uploadBuffer').mockResolvedValue({
+        url: 'https://example.com/image.png',
+        fileId: 1,
+      } as any);
+
+      let createCounter = 0;
+      (prismaService.imageGeneration.create as any).mockImplementation(
+        async () => {
+          createCounter++;
+          return {
+            id: createCounter,
+            userId: 1,
+            fileId: 1,
+            createdAt: new Date(),
+          };
+        },
+      );
+
+      // 并发调用 5 个 generateImageInternal（模拟 processor concurrency=5）
+      const concurrentTasks = Array.from({ length: 5 }, (_, i) =>
+        service.generateImageInternal(makeGenerateDto(i), i + 1),
+      );
+
+      const results = await Promise.all(concurrentTasks);
+
+      // 所有任务都应该成功完成
+      expect(results).toHaveLength(5);
+      results.forEach((result) => {
+        expect(result.imageUrl).toBe('https://example.com/image.png');
+        expect(result.provider).toBe('test-provider');
+      });
+
+      // 验证并发执行：检查存在时间重叠的任务
+      const starts = executionLog.filter((e) => e.event === 'gen-start');
+      const ends = executionLog.filter((e) => e.event === 'gen-end');
+
+      // 所有 5 个任务都应该有 start 和 end
+      expect(starts).toHaveLength(5);
+      expect(ends).toHaveLength(5);
+
+      // 并发场景下，有些任务的 start 应该在其他任务 end 之前
+      // 即最后一个 start 的时间 < 第一个 end 的时间（说明并发执行了）
+      const lastStartTime = Math.max(...starts.map((s) => s.time));
+      const firstEndTime = Math.min(...ends.map((e) => e.time));
+      expect(lastStartTime).toBeLessThanOrEqual(firstEndTime);
+    });
+
+    /**
+     * 模拟并发任务中部分失败的情况
+     */
+    it('should handle mixed success and failure in concurrent tasks', async () => {
+      let callCount = 0;
+      mockProvider.generateImage.mockImplementation(async () => {
+        callCount++;
+        // 第 2、4 个任务失败
+        if (callCount === 2 || callCount === 4) {
+          return { success: false, error: `Task ${callCount} failed` };
+        }
+        return {
+          success: true,
+          imageBase64: 'base64-data',
+          provider: 'test-provider',
+          model: 'test-model',
+          cost: 0.1,
+          metadata: {},
+        };
+      });
+
+      vi.spyOn(uploadService, 'uploadBuffer').mockResolvedValue({
+        url: 'https://example.com/image.png',
+        fileId: 1,
+      } as any);
+
+      let createId = 0;
+      (prismaService.imageGeneration.create as any).mockImplementation(
+        async () => {
+          createId++;
+          return {
+            id: createId,
+            userId: 1,
+            fileId: 1,
+            createdAt: new Date(),
+          } as any;
+        },
+      );
+
+      // 5 个并发任务
+      const tasks = Array.from({ length: 5 }, (_, i) =>
+        service
+          .generateImageInternal(makeGenerateDto(i), i + 1)
+          .then((result) => ({ status: 'fulfilled' as const, value: result }))
+          .catch((error) => ({ status: 'rejected' as const, reason: error })),
+      );
+
+      const results = await Promise.all(tasks);
+
+      const succeeded = results.filter((r) => r.status === 'fulfilled');
+      const failed = results.filter((r) => r.status === 'rejected');
+
+      // 3 个成功，2 个失败
+      expect(succeeded).toHaveLength(3);
+      expect(failed).toHaveLength(2);
+
+      // 失败的任务应该抛出 BadRequestException
+      failed.forEach((f) => {
+        expect(f.status === 'rejected' && f.reason).toBeInstanceOf(
+          BadRequestException,
+        );
+      });
+    });
+
+    /**
+     * 模拟并发进度追踪：多个任务各自独立报告进度
+     */
+    it('should track progress independently for concurrent tasks', async () => {
+      const progressMap = new Map<number, number[]>();
+
+      mockProvider.generateImage.mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return {
+          success: true,
+          imageBase64: 'base64-data',
+          provider: 'test-provider',
+          model: 'test-model',
+          cost: 0.1,
+          metadata: {},
+        };
+      });
+
+      vi.spyOn(uploadService, 'uploadBuffer').mockResolvedValue({
+        url: 'https://example.com/image.png',
+        fileId: 1,
+      } as any);
+
+      let createId = 0;
+      (prismaService.imageGeneration.create as any).mockImplementation(
+        async () => {
+          createId++;
+          return {
+            id: createId,
+            userId: 1,
+            fileId: 1,
+            createdAt: new Date(),
+          } as any;
+        },
+      );
+
+      // 3 个并发任务，每个都有独立的 progressCallback
+      const tasks = Array.from({ length: 3 }, (_, i) => {
+        const userId = i + 1;
+        progressMap.set(userId, []);
+
+        return service.generateImageInternal(
+          makeGenerateDto(i),
+          userId,
+          async (progress: number) => {
+            progressMap.get(userId)!.push(progress);
+          },
+        );
+      });
+
+      await Promise.all(tasks);
+
+      // 每个任务都应该报告自己的进度序列
+      for (const [userId, progresses] of progressMap.entries()) {
+        // 进度应该包含：20, 30, 70, 80, 90
+        expect(progresses).toEqual([20, 30, 70, 80, 90]);
+      }
+
+      // 确认 3 个任务的进度互不干扰
+      expect(progressMap.size).toBe(3);
+    });
+
+    /**
+     * 模拟并发提交 + 查询状态的竞争场景
+     */
+    it('should handle concurrent submission and status polling', async () => {
+      const jobStore = new Map<string, { state: string; progress: number }>();
+
+      vi.spyOn(imageQueue, 'add').mockImplementation(async (name, data) => {
+        const jobId = `job-${jobStore.size + 1}`;
+        jobStore.set(jobId, { state: 'waiting', progress: 0 });
+
+        // 模拟任务状态异步变更
+        setTimeout(() => {
+          const job = jobStore.get(jobId);
+          if (job) {
+            job.state = 'active';
+            job.progress = 50;
+          }
+        }, 10);
+        setTimeout(() => {
+          const job = jobStore.get(jobId);
+          if (job) {
+            job.state = 'completed';
+            job.progress = 100;
+          }
+        }, 30);
+
+        return { id: jobId, timestamp: Date.now() } as any;
+      });
+
+      vi.spyOn(imageQueue, 'getJob').mockImplementation(async (jobId: string) => {
+        const job = jobStore.get(jobId);
+        if (!job) return null;
+        return {
+          id: jobId,
+          timestamp: Date.now(),
+          processedOn: Date.now(),
+          finishedOn: job.state === 'completed' ? Date.now() : null,
+          progress: job.progress,
+          returnvalue: job.state === 'completed' ? { success: true } : null,
+          failedReason: null,
+          getState: vi.fn().mockResolvedValue(job.state),
+        } as any;
+      });
+
+      // 先提交 3 个任务
+      const submissions = await Promise.all(
+        Array.from({ length: 3 }, (_, i) =>
+          service.generateImage(makeGenerateDto(i), i + 1),
+        ),
+      );
+
+      // 立即查询所有任务状态（此时任务可能是 waiting 或 active）
+      const immediateStatuses = await Promise.all(
+        submissions.map((s) => service.getJobStatus(s.jobId)),
+      );
+
+      immediateStatuses.forEach((status) => {
+        expect(['waiting', 'active']).toContain(status.status);
+      });
+
+      // 等待任务完成后再查询
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const finalStatuses = await Promise.all(
+        submissions.map((s) => service.getJobStatus(s.jobId)),
+      );
+
+      finalStatuses.forEach((status) => {
+        expect(status.status).toBe('completed');
+        expect(status.progress).toBe(100);
+      });
+    });
+
+    /**
+     * 模拟超过并发限制的场景（超过5个同时处理）
+     * 验证任务排队机制
+     */
+    it('should queue tasks beyond concurrency limit', async () => {
+      const activeTasks = new Set<string>();
+      let maxConcurrent = 0;
+      const CONCURRENCY_LIMIT = 5;
+
+      mockProvider.generateImage.mockImplementation(async (prompt: string) => {
+        activeTasks.add(prompt);
+        maxConcurrent = Math.max(maxConcurrent, activeTasks.size);
+
+        // 模拟工作耗时
+        await new Promise((resolve) => setTimeout(resolve, 30));
+
+        activeTasks.delete(prompt);
+        return {
+          success: true,
+          imageBase64: 'base64-data',
+          provider: 'test-provider',
+          model: 'test-model',
+          cost: 0.1,
+          metadata: {},
+        };
+      });
+
+      vi.spyOn(uploadService, 'uploadBuffer').mockResolvedValue({
+        url: 'https://example.com/image.png',
+        fileId: 1,
+      } as any);
+
+      let createId = 0;
+      (prismaService.imageGeneration.create as any).mockImplementation(
+        async () => {
+          createId++;
+          return {
+            id: createId,
+            userId: 1,
+            fileId: 1,
+            createdAt: new Date(),
+          } as any;
+        },
+      );
+
+      // 提交 10 个任务，但模拟 concurrency=5 的限制
+      // 用简单的信号量模拟 BullMQ 的并发控制
+      const semaphore = {
+        count: 0,
+        max: CONCURRENCY_LIMIT,
+        queue: [] as (() => void)[],
+        async acquire() {
+          if (this.count < this.max) {
+            this.count++;
+            return;
+          }
+          await new Promise<void>((resolve) => this.queue.push(resolve));
+          this.count++;
+        },
+        release() {
+          this.count--;
+          const next = this.queue.shift();
+          if (next) next();
+        },
+      };
+
+      const processWithLimit = async (index: number) => {
+        await semaphore.acquire();
+        try {
+          return await service.generateImageInternal(
+            makeGenerateDto(index),
+            index + 1,
+          );
+        } finally {
+          semaphore.release();
+        }
+      };
+
+      const tasks = Array.from({ length: 10 }, (_, i) => processWithLimit(i));
+      const results = await Promise.all(tasks);
+
+      // 所有 10 个任务都应该成功
+      expect(results).toHaveLength(10);
+
+      // 验证：任何时刻最多只有 5 个任务在同时执行
+      expect(maxConcurrent).toBeLessThanOrEqual(CONCURRENCY_LIMIT);
+      // 确认确实有并发（不是串行的）
+      expect(maxConcurrent).toBeGreaterThan(1);
+    });
+  });
 });
