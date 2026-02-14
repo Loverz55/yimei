@@ -37,7 +37,7 @@ export class AuthService {
         loginId,
         password: hashedPassword,
         nickname: nickname || loginId,
-        updateArt: new Date(),
+        updateAt: new Date(),
       },
     });
 

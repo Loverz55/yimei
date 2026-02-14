@@ -20,7 +20,7 @@ model User {
   nickname             String?
   role                 Int                   @default(0)
   createdAt            DateTime              @default(now())
-  updateAt            DateTime              @updatedAt
+  updateAt             DateTime              @updatedAt
   poster               Poster[]
   aestheticSimulations AestheticSimulation[]
   imageGenerations     ImageGeneration[]
@@ -48,7 +48,7 @@ model Poster {
   imgUrl        String? // 可访问的图片URL
   user          User     @relation(fields: [createdPeople], references: [id])
   createdAt     DateTime @default(now())
-  updateAt     DateTime
+  updateAt      DateTime
   file          File     @relation(fields: [imgId], references: [id])
 }
 
@@ -77,7 +77,7 @@ model AestheticSimulation {
   createdPeople Int
   user          User     @relation(fields: [createdPeople], references: [id])
   createdAt     DateTime @default(now())
-  updateAt     DateTime
+  updateAt      DateTime
 }
 
 model ImageGeneration {
@@ -108,7 +108,7 @@ model MedicalAesthetics {
   id          Int     @id @default(autoincrement())
   category    String //skin,face,eyes,nose,lips,poster,other
   type        String  @default("user") //sys user
-  userId      Int
+  userId      Int     @default(1)
   label       String
   prompt      String
   description String?

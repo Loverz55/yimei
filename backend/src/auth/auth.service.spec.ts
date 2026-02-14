@@ -19,7 +19,7 @@ describe('AuthService', () => {
     nickname: 'Test User',
     role: 'USER',
     createdAt: new Date(),
-    updateArt: new Date(),
+    updateAt: new Date(),
   };
 
   beforeEach(async () => {

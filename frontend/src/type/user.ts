@@ -30,5 +30,5 @@ export interface UserListData {
   nickname: string;
   role: number;
   createdAt: string;
-  updateArt: string;
+  updateAt: string;
 }

@@ -45,7 +45,7 @@ export class UserService {
         nickname: true,
         role: true,
         createdAt: true,
-        updateArt: true,
+        updateAt: true,
       },
     });
     return res;
@@ -60,7 +60,7 @@ export class UserService {
         nickname: true,
         role: true,
         createdAt: true,
-        updateArt: true,
+        updateAt: true,
       },
     });
 
@@ -89,7 +89,7 @@ export class UserService {
         nickname: true,
         role: true,
         createdAt: true,
-        updateArt: true,
+        updateAt: true,
       },
     });
 
