@@ -2,13 +2,13 @@
  * 模型配置相关类型定义
  */
 
-import type { PaginationQuery } from './common';
+import type { PaginationQuery } from "./common";
 
 // Provider类型
-export type ProviderType = 'stability' | 'openai' | 'aliyun' | 'gemini';
+export type ProviderType = "stability" | "openai" | "gemini";
 
 // 服务类型
-export type ServiceType = 'image-gen' | 'text-gen' | 'embedding';
+export type ServiceType = "image-gen" | "text-gen" | "embedding";
 
 // 模型配置完整信息
 export interface ModelConfig {

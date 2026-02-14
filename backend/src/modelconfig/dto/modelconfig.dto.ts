@@ -14,10 +14,7 @@ const createModelSchema = z.object({
     .default('image-gen')
     .describe('服务类型：image-gen, text-gen, embedding'),
   modelId: z.string().optional().describe('具体模型ID'),
-  baseUrl: z
-    .string()
-    .url({ message: '必须是有效的URL格式' })
-    .describe('API基础URL'),
+  baseUrl: z.url({ message: '必须是有效的URL格式' }).describe('API基础URL'),
   apiKey: z.string().min(1, { message: 'API Key不能为空' }).describe('API密钥'),
   config: z
     .record(z.string(), z.any())

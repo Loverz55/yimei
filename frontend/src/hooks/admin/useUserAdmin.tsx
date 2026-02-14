@@ -3,7 +3,7 @@ import { UserListData } from "@/type/user";
 import { useEffect, useState } from "react";
 
 export default function useUserAdminTable() {
-  const [userList, setUserList] = useState<UserListData[]>();
+  const [userList, setUserList] = useState<UserListData[]>([]);
 
   const getUserList = async () => {
     const res = await GetUserListApi();

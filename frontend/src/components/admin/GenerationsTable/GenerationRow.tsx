@@ -2,16 +2,17 @@ import { Image as ImageIcon, User } from "lucide-react";
 import { getStatusBadge, getProviderBadge } from "../generationHelpers";
 import dayjs from "dayjs";
 import type { ImageGenerationHistory } from "@/type/imagegen";
+import { TableRow, TableCell } from "@/components/ui/table";
 
-interface TableRowProps {
+interface GenerationRowProps {
   record: ImageGenerationHistory;
   onImageClick: (fileId: number) => void;
 }
 
-export function TableRow({ record, onImageClick }: TableRowProps) {
+export function GenerationRow({ record, onImageClick }: GenerationRowProps) {
   return (
-    <tr className="hover:bg-muted/50 transition-colors">
-      <td className="px-4 py-3">
+    <TableRow>
+      <TableCell>
         {record.file?.key ? (
           <div
             className="w-16 h-16 bg-muted rounded border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
@@ -48,8 +49,8 @@ export function TableRow({ record, onImageClick }: TableRowProps) {
             <ImageIcon className="h-6 w-6 text-muted-foreground opacity-50" />
           </div>
         )}
-      </td>
-      <td className="px-4 py-3">
+      </TableCell>
+      <TableCell>
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
           <div className="text-sm">
@@ -65,22 +66,22 @@ export function TableRow({ record, onImageClick }: TableRowProps) {
             )}
           </div>
         </div>
-      </td>
-      <td className="px-4 py-3 max-w-xs">
+      </TableCell>
+      <TableCell className="max-w-xs">
         <div className="text-sm line-clamp-2" title={record.prompt}>
           {record.prompt}
         </div>
-      </td>
-      <td className="px-4 py-3">{getProviderBadge(record.provider)}</td>
-      <td className="px-4 py-3">{getStatusBadge(record.status)}</td>
-      <td className="px-4 py-3 text-sm">
+      </TableCell>
+      <TableCell>{getProviderBadge(record.provider)}</TableCell>
+      <TableCell>{getStatusBadge(record.status)}</TableCell>
+      <TableCell className="text-sm">
         {record.cost !== null && record.cost !== undefined
           ? `$${record.cost.toFixed(4)}`
           : "-"}
-      </td>
-      <td className="px-4 py-3 text-sm text-muted-foreground">
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
         {dayjs(record.createdAt).fromNow()}
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

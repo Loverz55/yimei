@@ -2,18 +2,19 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useGenerations } from "@/hooks/admin/useGenerations";
 import { useImagePreview } from "@/hooks/admin/useImagePreview";
 import { PreviewDialog } from "./GenerationsTable/PreviewDialog";
-import { TableHeader } from "./GenerationsTable/TableHeader";
-import { TableRow } from "./GenerationsTable/TableRow";
+import { GenerationsToolbar } from "./GenerationsTable/GenerationsToolbar";
+import { GenerationRow } from "./GenerationsTable/GenerationRow";
 import { TablePagination } from "./GenerationsTable/TablePagination";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import "dayjs/locale/zh-cn";
-
-dayjs.extend(relativeTime);
-dayjs.locale("zh-cn");
 
 export function GenerationsTable() {
   const {
@@ -71,7 +72,7 @@ export function GenerationsTable() {
         onClose={closePreview}
       />
 
-      <TableHeader
+      <GenerationsToolbar
         total={pagination.total}
         onRefresh={() => loadData()}
         loading={loading}
@@ -79,44 +80,28 @@ export function GenerationsTable() {
 
       {/* 表格 */}
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b bg-muted/50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  预览
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  用户
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Prompt
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Provider
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  状态
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  成本
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  时间
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {data.map((record) => (
-                <TableRow
-                  key={record.id}
-                  record={record}
-                  onImageClick={handleImageClick}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>预览</TableHead>
+              <TableHead>用户</TableHead>
+              <TableHead>Prompt</TableHead>
+              <TableHead>Provider</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>成本</TableHead>
+              <TableHead>时间</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((record) => (
+              <GenerationRow
+                key={record.id}
+                record={record}
+                onImageClick={handleImageClick}
+              />
+            ))}
+          </TableBody>
+        </Table>
       </Card>
 
       {/* 分页 */}

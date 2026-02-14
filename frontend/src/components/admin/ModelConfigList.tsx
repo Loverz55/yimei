@@ -395,7 +395,7 @@ export function ModelConfigList() {
                 <Input
                   id="priority"
                   type="number"
-                  {...formDialog.form.register("priority")}
+                  {...formDialog.form.register("priority", { valueAsNumber: true })}
                   placeholder="0"
                 />
                 <p className="text-xs text-muted-foreground">

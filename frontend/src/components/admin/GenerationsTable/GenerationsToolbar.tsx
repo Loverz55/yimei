@@ -7,7 +7,7 @@ interface TableHeaderProps {
   loading: boolean;
 }
 
-export function TableHeader({ total, onRefresh, loading }: TableHeaderProps) {
+export function GenerationsToolbar({ total, onRefresh, loading }: TableHeaderProps) {
   return (
     <div className="flex justify-between items-center">
       <div className="text-sm text-muted-foreground">共 {total} 条记录</div>
