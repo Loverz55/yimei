@@ -11,9 +11,9 @@ import type {
   medicalAestheticsRespons,
   creatMedicalAesthetics,
   updateMedicalAesthetics,
-  PaginationInfo,
 } from "@/type/medicalAesthetics";
 import { toast } from "sonner";
+import { PaginationInfo } from "@/type/common";
 
 /**
  * 个人提示词管理Hook配置
@@ -34,13 +34,15 @@ export interface UseMyPromptsReturn {
   /** 提示词列表 */
   prompts: medicalAestheticsRespons[];
   /** 分页信息 */
-  pagination: PaginationInfo | null;
+  pagination: PaginationInfo;
   /** 是否正在加载 */
   loading: boolean;
   /** 是否正在提交 */
   submitting: boolean;
   /** 当前页码 */
   currentPage: number;
+  /** 每页数量 */
+  pageSize: number;
   /** 刷新列表 */
   reload: (page?: number) => Promise<void>;
   /** 切换页码 */
@@ -48,10 +50,7 @@ export interface UseMyPromptsReturn {
   /** 创建提示词 */
   createPrompt: (data: creatMedicalAesthetics) => Promise<boolean>;
   /** 更新提示词 */
-  updatePrompt: (
-    id: number,
-    data: updateMedicalAesthetics
-  ) => Promise<boolean>;
+  updatePrompt: (id: number, data: updateMedicalAesthetics) => Promise<boolean>;
   /** 删除提示词 */
   deletePrompt: (id: number) => Promise<boolean>;
 }
@@ -66,7 +65,7 @@ export interface UseMyPromptsReturn {
  * ```
  */
 export function useMyPrompts(
-  options: UseMyPromptsOptions = {}
+  options: UseMyPromptsOptions = {},
 ): UseMyPromptsReturn {
   const { autoLoad = true, initialPage = 1, pageSize = 6 } = options;
   const [prompts, setPrompts] = useState<medicalAestheticsRespons[]>([]);
@@ -80,9 +79,9 @@ export function useMyPrompts(
       setLoading(true);
       const pageToLoad = page ?? currentPage;
       const res = await getMyPromptsApi({ page: pageToLoad, pageSize });
-      if (res.code === 0 && res.data) {
-        setPrompts(res.data.data);
-        setPagination(res.data.pagination);
+      if (res.code === 0 && res.data && res.pagination) {
+        setPrompts(res.data);
+        setPagination(res.pagination);
         setCurrentPage(pageToLoad);
       } else {
         toast.error("加载失败", {
@@ -103,7 +102,7 @@ export function useMyPrompts(
   };
 
   const createPrompt = async (
-    data: creatMedicalAesthetics
+    data: creatMedicalAesthetics,
   ): Promise<boolean> => {
     try {
       setSubmitting(true);
@@ -130,7 +129,7 @@ export function useMyPrompts(
 
   const updatePrompt = async (
     id: number,
-    data: updateMedicalAesthetics
+    data: updateMedicalAesthetics,
   ): Promise<boolean> => {
     try {
       setSubmitting(true);
@@ -161,8 +160,7 @@ export function useMyPrompts(
       if (res.code === 0) {
         toast.success("提示词删除成功");
         // 如果当前页删除后没有数据且不是第一页，回到前一页
-        const shouldGoToPreviousPage =
-          prompts.length === 1 && currentPage > 1;
+        const shouldGoToPreviousPage = prompts.length === 1 && currentPage > 1;
         await reload(shouldGoToPreviousPage ? currentPage - 1 : currentPage);
         return true;
       } else {
@@ -191,6 +189,7 @@ export function useMyPrompts(
     loading,
     submitting,
     currentPage,
+    pageSize,
     reload,
     changePage,
     createPrompt,

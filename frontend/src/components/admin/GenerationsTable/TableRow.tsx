@@ -1,28 +1,10 @@
 import { Image as ImageIcon, User } from "lucide-react";
 import { getStatusBadge, getProviderBadge } from "../generationHelpers";
 import dayjs from "dayjs";
-
-interface GenerationRecord {
-  id: number;
-  fileId: number;
-  userId: number;
-  prompt: string;
-  provider: string;
-  status: string;
-  cost: number | null;
-  createdAt: string;
-  file?: {
-    key: string;
-    url?: string;
-  };
-  user?: {
-    nickname?: string;
-    loginId?: string;
-  };
-}
+import type { ImageGenerationHistory } from "@/type/imagegen";
 
 interface TableRowProps {
-  record: GenerationRecord;
+  record: ImageGenerationHistory;
   onImageClick: (fileId: number) => void;
 }
 

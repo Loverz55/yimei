@@ -1,9 +1,11 @@
 import z from "zod";
-import type { PaginationQuery, PaginatedData } from './common';
+import type { PaginationQuery } from "./common";
 
 export interface medicalAestheticsRespons {
   id: number;
   category: string;
+  type: "user" | "sys";
+  userId: number;
   label: string;
   prompt: string;
   description?: string;
@@ -12,6 +14,8 @@ export interface medicalAestheticsRespons {
 export interface MedicalAestheticsTerm {
   id: number;
   category: string;
+  type: "user" | "sys";
+  userId: number;
   label: string;
   prompt: string;
   description?: string;
@@ -23,7 +27,7 @@ export interface MedicalAestheticsQuery extends PaginationQuery {
 }
 
 // 导出统一的分页类型（从 common.ts）
-export type { PaginationQuery, PaginatedData };
+export type { PaginationQuery };
 
 export const MEDICAL_AESTHETICS_CATEGORIES = [
   { id: "skin", label: "皮肤改善" },

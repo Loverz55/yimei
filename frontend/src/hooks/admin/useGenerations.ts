@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { getAllHistoryImgApi } from "@/api/imagegen";
 import { getBatchFileUrlsAsAdminApi } from "@/api/upload";
-import type { ImageGenerationHistory, PaginatedData } from "@/type/imagegen";
+import type { ImageGenerationHistory } from "@/type/imagegen";
+import type { PaginationInfo } from "@/type/common";
 import { toast } from "sonner";
 
 /**
  * 管理员查看所有用户生成记录的Hook
  */
 export function useGenerations() {
-  const [data, setData] = useState<PaginatedData<ImageGenerationHistory> | null>(null);
+  const [data, setData] = useState<ImageGenerationHistory[]>([]);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -21,11 +23,12 @@ export function useGenerations() {
         pageSize: currentPageSize,
       });
 
-      const records = response.data;
+      const records = response.data || [];
+      const paginationInfo = response.pagination || null;
 
       // 批量获取所有文件的 URL
-      if (records?.data && records.data.length > 0) {
-        const fileIds = records.data.map((record) => record.fileId);
+      if (records && records.length > 0) {
+        const fileIds = records.map((record) => record.fileId);
 
         try {
           const urlsResponse = await getBatchFileUrlsAsAdminApi({
@@ -40,21 +43,28 @@ export function useGenerations() {
             );
 
             // 将 URL 填充到对应的记录中
-            records.data = records.data.map((record) => ({
+            const recordsWithUrls = records.map((record) => ({
               ...record,
               file: {
                 ...record.file,
                 url: urlMap.get(record.fileId) || record.file.url || undefined,
               },
             }));
+
+            setData(recordsWithUrls);
+          } else {
+            setData(records);
           }
         } catch (error: any) {
           console.error("批量获取文件URL失败:", error);
           toast.error("部分图片加载失败");
+          setData(records);
         }
+      } else {
+        setData(records);
       }
 
-      setData(records);
+      setPagination(paginationInfo);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "加载生成记录失败");
     } finally {
@@ -77,6 +87,7 @@ export function useGenerations() {
 
   return {
     data,
+    pagination,
     loading,
     page,
     pageSize,

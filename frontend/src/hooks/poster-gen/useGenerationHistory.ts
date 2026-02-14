@@ -59,9 +59,9 @@ export function useGenerationHistory(): UseGenerationHistoryReturn {
       const res = await getHistoryImgApi(params);
 
       if (res.code === 0 && res.data) {
-        setHistory(res.data.data);
-        setPagination(res.data.pagination);
-        return res.data.data;
+        setHistory(res.data);
+        setPagination(res.pagination);
+        return res.data;
       } else {
         throw new Error(res.msg || "加载历史记录失败");
       }

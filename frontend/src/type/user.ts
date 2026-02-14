@@ -16,11 +16,19 @@ export interface LoginData {
   loginId: string;
   nickname: string;
   role: number;
-  token: string;
 }
 
 // 注册返回的 data
 export interface RegisterData {
   user: User;
   token: string;
+}
+
+export interface UserListData {
+  id: number;
+  loginId: string;
+  nickname: string;
+  role: number;
+  createdAt: string;
+  updateArt: string;
 }

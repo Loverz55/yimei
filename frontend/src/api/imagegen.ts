@@ -49,7 +49,7 @@ export const cancelJobApi = (jobId: string) => {
  * 获取生成历史（分页）
  */
 export const getHistoryImgApi = (params?: ImageHistoryQuery) => {
-  return api.get<ImageHistoryListResponse>(
+  return api.get<ImageGenerationHistory[]>(
     `/api/image-gen/history`,
     { params }
   );
@@ -59,7 +59,7 @@ export const getHistoryImgApi = (params?: ImageHistoryQuery) => {
  * 获取所有用户的生成历史（管理员专用）
  */
 export const getAllHistoryImgApi = (params?: ImageHistoryQuery) => {
-  return api.get<ImageHistoryListResponse>(
+  return api.get<ImageGenerationHistory[]>(
     `/api/image-gen/admin/all-history`,
     { params }
   );

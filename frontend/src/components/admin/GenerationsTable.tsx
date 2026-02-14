@@ -18,6 +18,7 @@ dayjs.locale("zh-cn");
 export function GenerationsTable() {
   const {
     data,
+    pagination,
     loading,
     page,
     pageSize,
@@ -40,7 +41,7 @@ export function GenerationsTable() {
     );
   }
 
-  if (!data || data.data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <Card className="p-12 text-center">
         <p className="text-muted-foreground">暂无生成记录</p>
@@ -51,7 +52,16 @@ export function GenerationsTable() {
     );
   }
 
-  const { data: records, pagination } = data;
+  if (!pagination) {
+    return (
+      <Card className="p-12 text-center">
+        <p className="text-muted-foreground">分页信息加载失败</p>
+        <Button className="mt-4" onClick={() => loadData()}>
+          重新加载
+        </Button>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -63,7 +73,7 @@ export function GenerationsTable() {
 
       <TableHeader
         total={pagination.total}
-        onRefresh={loadData}
+        onRefresh={() => loadData()}
         loading={loading}
       />
 
@@ -97,7 +107,7 @@ export function GenerationsTable() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {records.map((record) => (
+              {data.map((record) => (
                 <TableRow
                   key={record.id}
                   record={record}

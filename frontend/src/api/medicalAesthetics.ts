@@ -3,7 +3,7 @@ import {
   medicalAestheticsRespons,
   updateMedicalAesthetics,
 } from "@/type/medicalAesthetics";
-import type { PaginatedData, PaginationQuery } from "@/type/common";
+import type { PaginationQuery } from "@/type/common";
 import { api } from ".";
 
 // 查询参数类型扩展
@@ -37,10 +37,11 @@ export const deleteMedicalAestheticsApi = (id: string) => {
 };
 
 // 用户个人提示词管理（分页）
+// 注意：后端返回的 pagination 在根级别，不在 data 里
 export const getMyPromptsApi = (params?: PaginationQuery) => {
-  return api.get<PaginatedData<medicalAestheticsRespons>>(
+  return api.get<medicalAestheticsRespons[]>(
     "/api/medical-aesthetics/my",
-    { params }
+    { params },
   );
 };
 

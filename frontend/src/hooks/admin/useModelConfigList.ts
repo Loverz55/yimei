@@ -69,9 +69,9 @@ export function useModelConfigList(): UseModelConfigListReturn {
       setLoading(true);
       const res = await modelListApi({ ...query, page, pageSize });
       if (res.code === 0 && res.data) {
-        setConfigs(res.data.data || []);
-        setTotal(res.data.pagination.total || 0);
-        setTotalPages(res.data.pagination.totalPages || 0);
+        setConfigs(res.data || []);
+        setTotal(res.pagination?.total || 0);
+        setTotalPages(res.pagination?.totalPages || 0);
       }
     } catch (error: any) {
       toast.error("加载模型配置失败", {

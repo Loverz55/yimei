@@ -2,7 +2,7 @@
  * 图像生成相关类型定义
  */
 
-import type { PaginationQuery, PaginatedData } from './common';
+import type { PaginationQuery } from "./common";
 
 // 请求类型
 export interface GenerateImageRequest {
@@ -99,7 +99,9 @@ export interface JobStatusResponse {
   jobId: string;
   status: JobStatus;
   progress: number; // 0-100
-  result?: ImageGenerationResponse | NestedResultResponse<ImageGenerationResponse>; // 完成时返回，支持嵌套结构
+  result?:
+    | ImageGenerationResponse
+    | NestedResultResponse<ImageGenerationResponse>; // 完成时返回，支持嵌套结构
   error?: string; // 失败时返回
   createdAt: string;
   processedAt?: string;
@@ -164,7 +166,7 @@ export interface ImageGenerationHistory {
 export interface ImageHistoryQuery extends PaginationQuery {}
 
 // 历史记录列表响应（使用统一的分页数据结构）
-export type ImageHistoryListResponse = PaginatedData<ImageGenerationHistory>;
+export type ImageHistoryListResponse = ImageGenerationHistory;
 
 export interface ProviderConfig {
   id: number;
@@ -192,7 +194,7 @@ export interface AiModelConfigFull {
 
 export interface CreateProviderConfigRequest {
   name: string;
-  provider: "stability" | "openai" | "aliyun";
+  provider: "stability" | "openai" | "aliyun" | "gemini";
   type: string;
   modelId?: string;
   baseUrl: string;

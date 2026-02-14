@@ -2,7 +2,7 @@
  * 模型配置相关类型定义
  */
 
-import type { PaginatedData, PaginationQuery } from './common';
+import type { PaginationQuery } from './common';
 
 // Provider类型
 export type ProviderType = 'stability' | 'openai' | 'aliyun' | 'gemini';
@@ -86,8 +86,8 @@ export interface PresetParamsDto {
   params: Record<string, any>;
 }
 
-// 模型配置列表响应（使用统一的分页数据结构）
-export type ModelConfigListResponse = PaginatedData<ModelConfig>;
+// 模型配置列表响应
+export type ModelConfigListResponse = ModelConfig[];
 
 // 成本统计响应
 export interface CostStatsResponse {

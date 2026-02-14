@@ -5,6 +5,12 @@ interface ApiResponse<T = any> {
   code: number; // 0: 成功, 1: 失败
   msg: string;
   data?: T;
+  pagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 type RequestInterceptor = (
