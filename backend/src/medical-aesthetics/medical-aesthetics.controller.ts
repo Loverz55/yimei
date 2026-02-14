@@ -98,11 +98,12 @@ export class MedicalAestheticsController {
     @UserInfo() user: TokenDto,
     @Query() query: PaginationQueryDto,
   ) {
-    return await this.medicalAestheticsService.findUserPrompts(
+    const result = await this.medicalAestheticsService.findUserPrompts(
       user.id,
       query.page,
       query.pageSize,
     );
+    return success('获取个人提示词成功', result.data, result.pagination);
   }
 
   @Patch('my/:id')

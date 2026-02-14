@@ -18,7 +18,6 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AI_MODEL_CONFIG_CHANGED } from 'src/common/events';
 import { AiProviderService } from '../ai-provider/ai-provider.service';
-import { success } from '../common/result';
 
 interface RateLimitInfo {
   configId: number;
@@ -91,7 +90,7 @@ export class ModelconfigService {
     });
 
     // 返回 Result 格式
-    return success('查询成功', result);
+    return result;
   }
 
   /**

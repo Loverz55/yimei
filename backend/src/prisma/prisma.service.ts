@@ -5,7 +5,10 @@ import { PrismaClient, Prisma } from '../../generated/prisma/client';
 export type PrismaTx = Prisma.TransactionClient;
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor() {
     const connectionString = process.env.DATABASE_URL!;
     const adapter = new PrismaPg({ connectionString });

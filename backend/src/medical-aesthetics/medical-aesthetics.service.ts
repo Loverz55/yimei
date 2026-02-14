@@ -8,7 +8,6 @@ import {
   UpdateMedicalAestheticDto,
 } from './dto/medical-aesthetic.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { success } from 'src/common/result';
 
 @Injectable()
 export class MedicalAestheticsService {
@@ -100,14 +99,18 @@ export class MedicalAestheticsService {
     return res;
   }
 
-  async findUserPrompts(userId: number, page: number = 1, pageSize: number = 10) {
+  async findUserPrompts(
+    userId: number,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
     const result = await this.prisma.paginate(this.prisma.medicalAesthetics, {
       where: { userId },
       page,
       pageSize,
       orderBy: { id: 'desc' },
     });
-    return success('获取个人提示词成功', result);
+    return result;
   }
 
   async updateUserPrompt(

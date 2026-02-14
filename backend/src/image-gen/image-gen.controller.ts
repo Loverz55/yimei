@@ -73,7 +73,7 @@ export class ImageGenController {
       query.page,
       query.pageSize,
     );
-    return result;
+    return success('获取历史记录成功', result.data, result.pagination);
   }
 
   @Get('admin/all-history')
@@ -86,7 +86,7 @@ export class ImageGenController {
       query.page,
       query.pageSize,
     );
-    return result;
+    return success('获取历史记录成功', result.data, result.pagination);
   }
 
   @Get(':id')

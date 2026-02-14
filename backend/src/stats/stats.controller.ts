@@ -4,9 +4,12 @@ import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
 import { RolesGuard } from '../auth/guard/roles.guard';
 import { Role, Roles } from '../auth/decorators/roles.decorator';
 import { GetStatsQueryDto } from './dto/stats.dto';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @Controller('/stats')
+@ApiTags('状态统计')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
@@ -15,6 +18,7 @@ export class StatsController {
    */
   @Get()
   @Roles(Role.ADMIN) // 管理员角色
+  @ApiOperation({ summary: '统计' })
   async getStats(@Query() query: GetStatsQueryDto) {
     const data = await this.statsService.getStats(query);
     return {

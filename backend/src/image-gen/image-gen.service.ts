@@ -13,7 +13,6 @@ import { AiProviderService } from '../ai-provider/ai-provider.service';
 import { ImageGenerationResult } from '../ai-provider/providers/base.provider';
 import { QUEUE_NAMES } from '../queue/constants';
 import { ImageGenerationJobData } from '../queue/interfaces';
-import { success } from '../common/result';
 
 @Injectable()
 export class ImageGenService {
@@ -77,14 +76,18 @@ export class ImageGenService {
     this.logger.log(`提交图片生成任务到队列，用户 ${userId}`);
 
     // 添加任务到队列
-    const job = await this.imageGenerationQueue.add('generate-image', {
-      type: 'generate',
-      userId,
-      dto,
-    } as ImageGenerationJobData, {
-      removeOnComplete: { age: 300, count: 100 },
-      removeOnFail: false,
-    });
+    const job = await this.imageGenerationQueue.add(
+      'generate-image',
+      {
+        type: 'generate',
+        userId,
+        dto,
+      } as ImageGenerationJobData,
+      {
+        removeOnComplete: { age: 300, count: 100 },
+        removeOnFail: false,
+      },
+    );
 
     this.logger.log(`任务已提交，Job ID: ${job.id}`);
 
@@ -114,7 +117,9 @@ export class ImageGenService {
         ? this.aiProviderService.getImageGenProvider(undefined, dto.provider)
         : await this.aiProviderService.selectImageGenProvider();
 
-    const injectedPrompts = await this.resolveInjectedPrompts(dto.promptInjectIds);
+    const injectedPrompts = await this.resolveInjectedPrompts(
+      dto.promptInjectIds,
+    );
     const finalPrompt = this.buildInjectedPrompt({
       basePrompt: dto.prompt,
       injectedPrompts,
@@ -237,14 +242,18 @@ export class ImageGenService {
     this.logger.log(`提交图片局部重绘任务到队列，用户 ${userId}`);
 
     // 添加任务到队列
-    const job = await this.imageGenerationQueue.add('inpaint-image', {
-      type: 'inpaint',
-      userId,
-      dto,
-    } as ImageGenerationJobData, {
-      removeOnComplete: { age: 300, count: 100 },
-      removeOnFail: false,
-    });
+    const job = await this.imageGenerationQueue.add(
+      'inpaint-image',
+      {
+        type: 'inpaint',
+        userId,
+        dto,
+      } as ImageGenerationJobData,
+      {
+        removeOnComplete: { age: 300, count: 100 },
+        removeOnFail: false,
+      },
+    );
 
     this.logger.log(`任务已提交，Job ID: ${job.id}`);
 
@@ -279,8 +288,14 @@ export class ImageGenService {
       throw new NotFoundException('图片文件或遮罩文件不存在');
     }
 
-    const imageUrlResult = await this.uploadService.getFileUrl(dto.imageId, userId);
-    const maskUrlResult = await this.uploadService.getFileUrl(dto.maskId, userId);
+    const imageUrlResult = await this.uploadService.getFileUrl(
+      dto.imageId,
+      userId,
+    );
+    const maskUrlResult = await this.uploadService.getFileUrl(
+      dto.maskId,
+      userId,
+    );
 
     if (!imageUrlResult || !maskUrlResult) {
       throw new BadRequestException('获取文件访问地址失败');
@@ -299,7 +314,9 @@ export class ImageGenService {
         ? this.aiProviderService.getImageGenProvider(undefined, dto.provider)
         : await this.aiProviderService.selectImageGenProvider();
 
-    const injectedPrompts = await this.resolveInjectedPrompts(dto.promptInjectIds);
+    const injectedPrompts = await this.resolveInjectedPrompts(
+      dto.promptInjectIds,
+    );
     const finalPrompt = this.buildInjectedPrompt({
       basePrompt: dto.prompt,
       injectedPrompts,
@@ -422,9 +439,9 @@ export class ImageGenService {
       },
     });
 
-    this.logger.log(`找到 ${result.data.length} 条记录`);
+    this.logger.log(`找到 ${result.data?.length} 条记录`);
 
-    return success('获取历史记录成功', result);
+    return result;
   }
 
   /**
@@ -451,9 +468,9 @@ export class ImageGenService {
       },
     });
 
-    this.logger.log(`找到 ${result.data.length} 条记录`);
+    this.logger.log(`找到 ${result.data?.length} 条记录`);
 
-    return success('获取历史记录成功', result);
+    return result;
   }
 
   /**
@@ -543,7 +560,9 @@ export class ImageGenService {
     const state = await job.getState();
 
     if (state === 'completed' || state === 'failed') {
-      throw new BadRequestException(`任务已${state === 'completed' ? '完成' : '失败'}，无法取消`);
+      throw new BadRequestException(
+        `任务已${state === 'completed' ? '完成' : '失败'}，无法取消`,
+      );
     }
 
     await job.remove();
