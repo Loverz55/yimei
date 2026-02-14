@@ -13,18 +13,19 @@ export default function AdminUsersTable() {
   const { userList } = useUserAdminTable();
 
   return (
-    <div className="flex">
+    <div>
       <div>
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="text-center">
               <TableHead>登录ID</TableHead>
               <TableHead>昵称</TableHead>
               <TableHead>角色</TableHead>
               <TableHead>创建时间</TableHead>
+              <TableHead>操作</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="">
             {userList.map((item) => (
               <UserAdminRow key={item.id} {...item} />
             ))}
