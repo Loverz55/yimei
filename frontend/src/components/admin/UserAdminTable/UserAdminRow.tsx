@@ -1,28 +1,30 @@
-import { UserListData, UserRoleLabel } from "@/type/user";
-import { TableRow, TableCell } from "@/components/ui/table";
-import dayjs from "dayjs";
 import { Button } from "@/components/ui/button";
-import { useSetAtom } from "jotai";
-import { userEditInfoAtom, userInfoEditDialogStatusAtom } from "@/store/admin";
+import { TableCell, TableRow } from "@/components/ui/table";
+import {
+  UserListData,
+  UserRoleLabel,
+  UserRolePermissions,
+} from "@/type/user";
+import dayjs from "dayjs";
 
-export default function UserAdminRow(props: UserListData) {
-  const setUserInfoEditDialogStatus = useSetAtom(userInfoEditDialogStatusAtom);
-  const setUserEditInfo = useSetAtom(userEditInfoAtom);
+interface Props {
+  user: UserListData;
+  onEdit: (user: UserListData) => void;
+}
 
+export default function UserAdminRow({ user, onEdit }: Props) {
   return (
-    <TableRow className="p-2">
-      <TableCell className="font-medium">{props.loginId}</TableCell>
-      <TableCell>{props.nickname}</TableCell>
-      <TableCell>{UserRoleLabel[props.role] || "未知"}</TableCell>
-      <TableCell>{dayjs(props.createdAt).format("YYYY-MM-DD HH:mm")}</TableCell>
-      <Button
-        onClick={() => {
-          setUserInfoEditDialogStatus(true);
-          setUserEditInfo(props);
-        }}
-      >
-        编辑
-      </Button>
+    <TableRow>
+      <TableCell className="font-medium">{user.loginId}</TableCell>
+      <TableCell>{user.nickname || "-"}</TableCell>
+      <TableCell>{UserRoleLabel[user.role] || "未知"}</TableCell>
+      <TableCell>{UserRolePermissions[user.role] || "-"}</TableCell>
+      <TableCell>{dayjs(user.createdAt).format("YYYY-MM-DD HH:mm")}</TableCell>
+      <TableCell className="text-right">
+        <Button size="sm" variant="outline" onClick={() => onEdit(user)}>
+          编辑
+        </Button>
+      </TableCell>
     </TableRow>
   );
 }

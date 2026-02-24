@@ -3,10 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 
 function AdminUsersPage() {
   return (
-    <div className="container mx-auto px-8 py-8 max-w-7xl">
+    <div className="container mx-auto max-w-7xl px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">用户管理</h1>
-        <p className="mt-2 text-muted-foreground">管理系统用户、角色和权限</p>
+        <p className="mt-2 text-muted-foreground">
+          管理系统用户，支持新建、编辑和分页查询。
+        </p>
       </div>
 
       <AdminUsersTable />
